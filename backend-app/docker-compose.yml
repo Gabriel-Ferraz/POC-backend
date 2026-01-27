@@ -1,0 +1,9 @@
+services:
+  huglabs_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: huglabs_api
+    ports:
+      - "80:80"
+    restart: unless-stopped

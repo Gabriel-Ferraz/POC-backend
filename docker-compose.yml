@@ -1,9 +1,32 @@
 services:
-  huglabs_api:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: huglabs_api
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    networks:
+      - network
     ports:
-      - "80:80"
-    restart: unless-stopped
+      - 5432:5432
+
+  redis:
+    image: redis:alpine
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+    networks:
+      - network
+    command: >
+      redis-server --port 6379 --appendonly yes
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  network:
+    driver: bridge

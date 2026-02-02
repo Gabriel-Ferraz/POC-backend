@@ -1,4 +1,4 @@
-# HugLabs API
+# Backend App
 
 ## Requirements
 
@@ -9,20 +9,19 @@
 ## Technology Stack
 
 - **API**: RESTful API with Laravel 12.x
-- **Database**: PostgreSQL
 
 ## Getting Started
 
 Clone the repository:
 
 ```bash
-git clone git@gitlab.hugyourcustomer.ai:huglabs/huglabs-api.git
+git clone git@gitlab.hugyourcustomer.ai:boilerplate/backend-app.git
 ```
 
 Access the project and install all dependencies:
 
 ```bash
-cd huglabs-api
+cd backend-app
 
 # Install PHP dependencies
 composer install
@@ -99,7 +98,7 @@ The `dev:async` command uses Laravel Octane with Swoole instead of the standard 
 Run the following command to create the Docker container application
 
 ```bash
-docker build --no-cache -t huglabs_api:dev .
+docker build --no-cache -t backend_app:dev .
 ```
 
 ## Contributing

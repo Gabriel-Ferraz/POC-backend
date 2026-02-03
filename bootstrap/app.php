@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -26,14 +27,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'message' => 'Too many requests',
                     'errors' => null
-                ], 429);
+                ], Response::HTTP_TOO_MANY_REQUESTS);
             }
 
             if ($exception instanceof \Illuminate\Validation\ValidationException) {
                 return response()->json([
                     'message' => 'Invalid data',
                     'errors' => $exception->errors()
-                ], 422);
+                ], Response::HTTP_UNPROCESSABLE_ENTITY);
             }
 
             if (
@@ -43,12 +44,12 @@ return Application::configure(basePath: dirname(__DIR__))
                 return response()->json([
                     'message' => 'Resource not found',
                     'errors' => null
-                ], 404);
+                ], Response::HTTP_NOT_FOUND);
             }
 
             return response()->json([
                 'message' => 'Internal server error',
                 'errors' => null
-            ], 500);
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
         });
     })->create();

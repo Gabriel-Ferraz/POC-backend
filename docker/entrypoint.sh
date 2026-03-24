@@ -1,14 +1,15 @@
 #!/bin/sh
+set -e
 
-# Enables write and read permissions on the file
+echo "Setting up storage permissions..."
 chown -R www-data:www-data /app/storage /app/bootstrap/cache
 chmod -R 775 /app/storage /app/bootstrap/cache
 
-# Enables setgid on directories
-find /app/storage bootstrap/cache -type d -exec chmod g+s {} \;
+echo "Configuring directory permissions..."
+find /app/storage /app/bootstrap/cache -type d -exec chmod g+s {} \;
 
-# Create storage link for public file access
+echo "Creating storage symbolic link..."
 cd /app && php artisan storage:link
 
-# Runs the supervisor
+echo "Starting supervisor services..."
 exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf -n

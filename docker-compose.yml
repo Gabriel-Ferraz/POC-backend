@@ -1,32 +1,53 @@
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3333:3333"
+    volumes:
+      - .:/app
+      - app_vendor:/app/vendor
+    environment:
+      DB_CONNECTION: pgsql
+      DB_USERNAME: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "300"
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   postgres:
-    image: postgres:16-alpine
+    image: postgres:15-alpine
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     environment:
       POSTGRES_DB: ${DB_DATABASE}
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql
     networks:
       - network
-    ports:
-      - 5432:5432
-
-  redis:
-    image: redis:alpine
-    ports:
-      - 6379:6379
-    volumes:
-      - redis_data:/data
-    networks:
-      - network
-    command: >
-      redis-server --port 6379 --appendonly yes
-
-volumes:
-  postgres_data:
-  redis_data:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 networks:
   network:
     driver: bridge
+
+volumes:
+  app_vendor:
+  postgres_data:
+    driver: local

@@ -1,36 +1,24 @@
+# syntax=docker/dockerfile:1.4
 FROM ubuntu:22.04 AS base
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# System deps + PHP 8.2 PPA in one pass with BuildKit cache
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
     tzdata \
     software-properties-common \
-    lsb-release \
     ca-certificates \
-    apt-transport-https \
     curl \
     unzip \
-    zip \
-    build-essential \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    libzip-dev \
     gnupg \
     openssl \
     && ln -fs /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime \
     && dpkg-reconfigure -f noninteractive tzdata \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Install PHP 8.2 + Required extensions
-RUN add-apt-repository ppa:ondrej/php -y \
-    && apt-get update \
-    && apt-get install -y \
-    php8.2 \
+    && add-apt-repository ppa:ondrej/php -y \
+    && apt-get update && apt-get install -y --no-install-recommends \
     php8.2-cli \
-    php8.2-common \
     php8.2-mbstring \
     php8.2-xml \
     php8.2-zip \
@@ -39,56 +27,26 @@ RUN add-apt-repository ppa:ondrej/php -y \
     php8.2-gd \
     php8.2-pgsql \
     php8.2-opcache \
-    php8.2-swoole \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
-FROM base AS frontend-builder
-
-WORKDIR /build
-
-# Install Node.js 20
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
-    && apt-get install -y nodejs \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Copy package files for dependency installation
-COPY package*.json ./
-
-# Install node dependencies
-RUN npm ci
-
-# Copy frontend source files
-COPY resources ./resources
-COPY public ./public
-COPY vite.config.js ./
-COPY tailwind.config.js* ./
-COPY postcss.config.js* ./
-COPY tsconfig.json* ./
-
-# Build frontend assets
-RUN npm run build
+    php8.2-swoole
 
 FROM base AS backend-builder
 
 WORKDIR /build
 
+# Copy Composer binary from official image
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+
 # Copy composer files for dependency installation
 COPY composer.json composer.lock ./
 
 # Install PHP dependencies (production only)
-RUN composer install \
+RUN --mount=type=cache,target=/root/.composer/cache,sharing=locked \
+    composer install \
     --no-dev \
     --no-interaction \
     --no-scripts \
     --prefer-dist \
-    --optimize-autoloader \
-    && composer clear-cache \
-    && rm -rf /root/.composer/cache
+    --optimize-autoloader
 
 # Copy application source
 COPY . .
@@ -100,46 +58,20 @@ COPY --from=frontend-builder /build/public/build ./public/build
 RUN composer run-script post-autoload-dump
 
 # Generate Laravel optimizations
-RUN php artisan event:cache \
+RUN php artisan config:cache \
+    php artisan event:cache \
     && php artisan route:cache
 
-FROM ubuntu:22.04 AS production
-
-ENV DEBIAN_FRONTEND=noninteractive
+FROM base AS production
 
 WORKDIR /app
 
-# Install runtime dependencies only
-RUN apt-get update && apt-get install -y \
-    tzdata \
-    ca-certificates \
-    curl \
+# Install production services
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
     supervisor \
-    nginx \
-    software-properties-common \
-    && ln -fs /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime \
-    && dpkg-reconfigure -f noninteractive tzdata \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Install PHP 8.2 runtime (no dev packages)
-RUN add-apt-repository ppa:ondrej/php -y \
-    && apt-get update \
-    && apt-get install -y \
-    php8.2 \
-    php8.2-cli \
-    php8.2-common \
-    php8.2-mbstring \
-    php8.2-xml \
-    php8.2-zip \
-    php8.2-curl \
-    php8.2-bcmath \
-    php8.2-gd \
-    php8.2-pgsql \
-    php8.2-opcache \
-    php8.2-swoole \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    nginx
 
 # Copy application from backend builder
 COPY --from=backend-builder --chown=www-data:www-data /build ./
@@ -150,10 +82,13 @@ COPY docker/nginx/laravel.conf /etc/nginx/sites-available/default
 COPY docker/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
-# Set proper permissions
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=60s \
+    CMD curl -f http://localhost/health || exit 1
+
 # Expose ports
+# 80 = Nginx
 EXPOSE 80
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -1,39 +1,32 @@
-# Backend App
+# Superlam API
 
 ## Requirements
 
 - PHP 8.2
 - [Composer](https://getcomposer.org/download/)
-- Node.js 20.x
+- Docker
+- Postgres 15
 
 ## Technology Stack
 
-- **API**: RESTful API with Laravel 12.x
+- **API**: RESTful API with Laravel
+- **Database**: PostgreSQL
 
 ## Getting Started
 
 Clone the repository:
 
 ```bash
-git clone git@gitlab.hugyourcustomer.ai:boilerplate/backend-app.git
+git clone git@github.com:boilerplate/backend-app.git [APP_NAME]
 ```
 
 Access the project and install all dependencies:
 
 ```bash
-cd backend-app
+cd [APP_NAME]
 
 # Install PHP dependencies
 composer install
-
-# Install Node dependencies
-npm install
-```
-
-Start the Docker containers:
-
-```bash
-docker composer up -d
 ```
 
 Set up your environment file:
@@ -48,7 +41,9 @@ Generate application key:
 php artisan key:generate
 ```
 
-Run database migrations and seeders:
+## Database Setup
+
+Before running the application, you need to set up the database. Make sure your database credentials are configured in the `.env` file, then run:
 
 ```bash
 composer run db:build
@@ -93,12 +88,27 @@ The `dev:async` command uses Laravel Octane with Swoole instead of the standard 
 
 **Note:** All other services (logs, Vite, queue workers, Reverb, and scheduler) run the same way in both modes.
 
-## Build
+### Docker (Recommended)
 
-Run the following command to create the Docker container application
+For a complete development environment with all dependencies (PostgreSQL, Redis, Evolution API) running in containers:
 
 ```bash
-docker build --no-cache -t backend_app:dev .
+docker compose up
+```
+
+This will start:
+
+- **Application container** on port 3333
+- **PostgreSQL database** on port 5432
+
+The application code is mounted as a volume, so any changes you make will be reflected immediately without rebuilding the container.
+
+**Note:** On the first build, migrations and seeders are automatically executed, so the database will be ready to use.
+
+**Stopping the environment:**
+
+```bash
+docker compose down
 ```
 
 ## Contributing

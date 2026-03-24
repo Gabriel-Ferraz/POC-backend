@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "huglabs/huglabs-api",
+    "name": "your-org/your-project",
     "version": "0.1.0",
     "type": "project",
-    "description": "HugLabs API",
+    "description": "Laravel Backend API Boilerplate",
     "keywords": [
         "laravel",
         "framework"

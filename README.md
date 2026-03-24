@@ -1,120 +1,189 @@
-# Laravel Backend App
+# Laravel Backend Boilerplate
+
+A production-ready Laravel 12 boilerplate for building RESTful APIs with modern tooling and best practices.
+
+## Features
+
+- **Laravel 12** with PHP 8.2
+- **PostgreSQL** database
+- **Laravel Octane** with Swoole for async performance
+- **Pest v3** for testing
+- **Laravel Pint** for code formatting
+- **Laravel Boost** for enhanced DX
+- **Docker Compose** for local development
+- **Swagger UI** for API documentation
+- **Husky** for git hooks
+- **Concurrently** for running multiple processes
 
 ## Requirements
 
-- PHP 8.2
+- PHP 8.2+
 - [Composer](https://getcomposer.org/download/)
-- Docker
-- Postgres 15
+- Docker & Docker Compose
+- PostgreSQL 15 (if not using Docker)
+- Node.js 18+ (for frontend assets)
 
-## Technology Stack
+## Quick Start
 
-- **API**: RESTful API with Laravel
-- **Database**: PostgreSQL
-
-## Getting Started
-
-Clone the repository:
+### 1. Clone or Use as Template
 
 ```bash
-git clone git@github.com:boilerplate/backend-app.git [APP_NAME]
+# Clone the repository
+git clone <repo-url> my-project-name
+cd my-project-name
+
+# Remove the original git history and start fresh
+rm -rf .git
+git init
 ```
 
-Access the project and install all dependencies:
+### 2. Customize Your Project
+
+Edit `composer.json` and update:
+```json
+{
+  "name": "your-org/your-project",
+  "description": "Your project description"
+}
+```
+
+### 3. Install Dependencies
 
 ```bash
-cd [APP_NAME]
-
 # Install PHP dependencies
 composer install
+
+# Install Node dependencies
+npm install
 ```
 
-Set up your environment file:
+### 4. Environment Setup
 
 ```bash
+# Copy environment file
 cp .env.example .env
-```
 
-Generate application key:
-
-```bash
+# Generate application key
 php artisan key:generate
+
+# Update .env with your project details
+# At minimum, set: APP_NAME, DB_DATABASE
 ```
 
-## Database Setup
+### 5. Database Setup
 
-Before running the application, you need to set up the database. Make sure your database credentials are configured in the `.env` file, then run:
+Make sure your database credentials are configured in `.env`, then:
 
 ```bash
+# Run migrations
 composer run db:build
 ```
 
-## Usage
+## Development
 
-### Standard Development Mode
+### Option 1: Docker (Recommended)
 
-Start the development server:
+The easiest way to get started. All dependencies are containerized:
+
+```bash
+# Start all services
+docker compose up
+
+# Stop services
+docker compose down
+```
+
+This starts:
+- Application container on port 3333
+- PostgreSQL database on port 5432
+
+Changes to your code are reflected immediately (hot reload).
+
+### Option 2: Local Development
+
+#### Standard Mode
 
 ```bash
 composer run dev
 ```
 
-This command starts the application using the default Laravel development server along with all necessary services (logs, Vite, queue workers, Reverb WebSocket server, and scheduler).
+Starts the Laravel development server with logs monitoring.
 
-### Async Development Mode (Laravel Octane + Swoole)
+#### Async Mode (Laravel Octane + Swoole)
 
-For improved performance in your local environment, you can run the application using Laravel Octane with Swoole:
+For better performance:
 
 ```bash
+# Install Swoole first
+sudo apt-get install php8.2-swoole
+
+# Run with Octane
 composer run dev:async
 ```
 
-**Prerequisites:**
+Benefits:
+- Faster response times
+- Persistent application state
+- Better concurrent request handling
+- Async task execution
 
-Before using the async mode, you need to install the Swoole PHP extension:
-
-```bash
-sudo apt-get install php8.2-swoole
-```
-
-**What's the difference?**
-
-The `dev:async` command uses Laravel Octane with Swoole instead of the standard PHP development server. This provides:
-
-- Better performance and faster response times
-- Persistent application state between requests
-- Improved handling of concurrent requests
-- Asynchronous task execution capabilities
-
-**Note:** All other services (logs, Vite, queue workers, Reverb, and scheduler) run the same way in both modes.
-
-### Docker (Recommended)
-
-For a complete development environment with all dependencies (PostgreSQL, Redis, Evolution API) running in containers:
+## Available Commands
 
 ```bash
-docker compose up
+# Development
+composer run dev          # Start standard dev server
+composer run dev:async    # Start Octane dev server
+
+# Database
+composer run db:build     # Run migrations with seeders
+composer run db:rebuild   # Fresh migrations with seeders
+
+# Testing
+composer run test         # Run all tests
+composer run test:unit    # Run unit tests only
+composer run test:feature # Run feature tests only
+
+# Code Quality
+composer run lint         # Format code with Pint
 ```
 
-This will start:
+## Project Structure
 
-- **Application container** on port 3333
-- **PostgreSQL database** on port 5432
+```
+app/
+├── Http/
+│   ├── Controllers/    # API Controllers
+│   └── Middleware/     # Custom middleware
+├── Models/             # Eloquent models
+├── Services/           # Business logic
+└── Support/            # Helpers and utilities
 
-The application code is mounted as a volume, so any changes you make will be reflected immediately without rebuilding the container.
+database/
+├── migrations/         # Database migrations
+└── seeders/           # Database seeders
 
-**Note:** On the first build, migrations and seeders are automatically executed, so the database will be ready to use.
+tests/
+├── Feature/           # Feature tests
+└── Unit/              # Unit tests
 
-**Stopping the environment:**
-
-```bash
-docker compose down
+.claude/               # Claude Code context
+.taskmaster/           # Task Master configuration
 ```
 
-## Contributing
+## Next Steps
 
-Please read our contributing guidelines before submitting pull requests.
+After setting up the boilerplate:
 
-## License
+1. **Remove Example Code**: Clean up any example controllers/models
+2. **Configure Services**: Set up mail, cache, queue drivers in `.env`
+3. **API Documentation**: Update Swagger annotations
+4. **Testing**: Write tests for your endpoints
+5. **Deployment**: Configure your production environment
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## Built With
+
+- [Laravel 12](https://laravel.com) - PHP Framework
+- [PostgreSQL](https://www.postgresql.org) - Database
+- [Pest](https://pestphp.com) - Testing Framework
+- [Laravel Octane](https://laravel.com/docs/octane) - High-performance server
+- [Laravel Boost](https://github.com/laravel/boost) - Enhanced development experience

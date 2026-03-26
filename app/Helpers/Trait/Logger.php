@@ -10,7 +10,10 @@ trait Logger
     {
         $stack = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)[2];
 
-        return "{$stack['class']}::{$stack['function']}";
+        $className = array_last(explode("\\", $stack['class']));
+        $functionName = $stack['function'];
+
+        return "{$className}::{$functionName}";
     }
 
     public function writeInfo(string $message, array $context = [])

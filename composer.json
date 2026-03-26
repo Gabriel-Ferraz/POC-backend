@@ -14,11 +14,13 @@
         "laravel/framework": "^12.0",
         "laravel/octane": "*",
         "laravel/tinker": "^2.10.1",
+        "resend/resend-php": "^1.1",
+        "spatie/laravel-permission": "^6.24",
         "wotz/laravel-swagger-ui": "^1.2"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
-        "laravel/boost": "^1.8",
+        "laravel/boost": "*",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
         "laravel/sail": "^1.41",
@@ -60,20 +62,27 @@
             "./vendor/bin/pint"
         ],
         "test": [
-            "@php artisan config:clear --ansi",
-            "@php artisan test"
+            "@php artisan test --colors=always"
+        ],
+        "test:ci": [
+            "@php artisan test --ci --colors=always"
         ],
         "test:unit": [
-            "./vendor/bin/pest --colors=always --testsuite=Unit"
+            "@php artisan test --colors=always --testsuite=Unit"
         ],
         "test:feature": [
-            "./vendor/bin/pest --colors=always --testsuite=Feature"
+            "@php artisan test --colors=always --testsuite=Feature"
+        ],
+        "test:coverage": [
+            "@php artisan test --colors=always --coverage --min=80"
         ],
         "db:build": [
-            "php artisan migrate --seeder=DatabaseSeeder"
+            "@php artisan migrate --seed",
+            "@php artisan storage:link || true"
         ],
         "db:rebuild": [
-            "php artisan migrate:fresh --seeder=DatabaseSeeder"
+            "@php artisan migrate:fresh --seed",
+            "@php artisan storage:link || true"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

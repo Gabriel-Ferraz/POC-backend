@@ -1,8 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Application;
-use Illuminate\Foundation\Configuration\Exceptions;
-use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Configuration\{Exceptions, Middleware};
 use Illuminate\Http\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -20,9 +19,22 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api([
             'throttle:api'
         ]);
+
+        $middleware->alias([
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\Throwable $exception, $request) {
+            if ($exception instanceof \Illuminate\Auth\AuthenticationException) {
+                return response()->json([
+                    'message' => 'Unauthenticated',
+                    'errors' => null
+                ], \Illuminate\Http\Response::HTTP_UNAUTHORIZED);
+            }
+
             if ($exception instanceof \Illuminate\Http\Exceptions\ThrottleRequestsException) {
                 return response()->json([
                     'message' => 'Too many requests',

@@ -42,35 +42,6 @@ class ModulePermissionSeeder extends Seeder
 
             // Admin — Audit Logs
             ['name' => 'admin.audit-logs', 'type' => 'page', 'module' => 'admin'],
-
-            // Logistic — Planning
-            ['name' => 'logistic.planning', 'type' => 'page', 'module' => 'logistic'],
-            ['name' => 'logistic.planning.store', 'type' => 'action', 'module' => 'logistic'],
-            ['name' => 'logistic.planning.update', 'type' => 'action', 'module' => 'logistic'],
-            ['name' => 'logistic.planning.destroy', 'type' => 'action', 'module' => 'logistic'],
-
-            // Logistic — Types
-            ['name' => 'logistic.planning-types', 'type' => 'page', 'module' => 'logistic'],
-            ['name' => 'logistic.service-types', 'type' => 'page', 'module' => 'logistic'],
-            ['name' => 'logistic.attendance-types', 'type' => 'page', 'module' => 'logistic'],
-
-            // Estoque (Sucata)
-            ['name' => 'estoque.dashboard-gerencial', 'type' => 'page', 'module' => 'estoque'],
-            ['name' => 'estoque.curva-abc', 'type' => 'page', 'module' => 'estoque'],
-            ['name' => 'estoque.risco-ruptura', 'type' => 'page', 'module' => 'estoque'],
-            ['name' => 'estoque.visao-geral', 'type' => 'page', 'module' => 'estoque'],
-
-            // Almoxarifado (Insumos)
-            ['name' => 'almoxarifado.dashboard-gerencial', 'type' => 'page', 'module' => 'almoxarifado'],
-
-            // Manutencao
-            ['name' => 'manutencao.visao-geral', 'type' => 'page', 'module' => 'manutencao'],
-            ['name' => 'manutencao.equipamentos', 'type' => 'page', 'module' => 'manutencao'],
-            ['name' => 'manutencao.ordens-servico', 'type' => 'page', 'module' => 'manutencao'],
-            ['name' => 'manutencao.veiculos', 'type' => 'page', 'module' => 'manutencao'],
-            ['name' => 'manutencao.disponibilidade', 'type' => 'page', 'module' => 'manutencao'],
-            ['name' => 'manutencao.vencimento-oleo', 'type' => 'page', 'module' => 'manutencao'],
-            ['name' => 'manutencao.pecas', 'type' => 'page', 'module' => 'manutencao'],
         ];
 
         foreach ($permissions as $permission) {

@@ -1,0 +1,58 @@
+
+
+[1;37;40mCode Coverage Report:      [0m
+[1;37;40m  2026-03-26 16:33:36      [0m
+[1;37;40m                           [0m
+[1;37;40m Summary:                  [0m
+[30;42m  Classes: 92.00% (23/25)  [0m
+[30;42m  Methods: 96.83% (61/63)  [0m
+[30;42m  Lines:   98.11% (259/264)[0m
+
+App\Helpers\Trait\Auditable
+  [30;42mMethods: 100.00% ( 1/ 1)[0m   [30;42mLines: 100.00% ( 10/ 10)[0m
+App\Helpers\Trait\Cacheable
+  [30;42mMethods: 100.00% ( 6/ 6)[0m   [30;42mLines: 100.00% ( 10/ 10)[0m
+App\Helpers\Trait\Logger
+  [30;42mMethods: 100.00% ( 5/ 5)[0m   [30;42mLines: 100.00% (  8/  8)[0m
+App\Http\Controllers\Admin\AuditLogController
+  [30;42mMethods: 100.00% ( 2/ 2)[0m   [30;42mLines: 100.00% ( 12/ 12)[0m
+App\Http\Controllers\Admin\PermissionController
+  [30;42mMethods: 100.00% ( 2/ 2)[0m   [30;42mLines: 100.00% (  4/  4)[0m
+App\Http\Controllers\Admin\RoleController
+  [30;42mMethods: 100.00% ( 6/ 6)[0m   [30;42mLines: 100.00% ( 36/ 36)[0m
+App\Http\Controllers\Admin\UserController
+  [30;42mMethods: 100.00% ( 7/ 7)[0m   [30;42mLines: 100.00% ( 37/ 37)[0m
+App\Http\Controllers\Auth\AuthController
+  [30;42mMethods: 100.00% ( 3/ 3)[0m   [30;42mLines: 100.00% ( 27/ 27)[0m
+App\Http\Middleware\HandleRequestTrace
+  [30;42mMethods: 100.00% ( 1/ 1)[0m   [30;42mLines: 100.00% (  2/  2)[0m
+App\Http\Requests\Admin\StoreRoleRequest
+  [30;42mMethods: 100.00% ( 2/ 2)[0m   [30;42mLines: 100.00% (  4/  4)[0m
+App\Http\Requests\Admin\StoreUserRequest
+  [30;42mMethods: 100.00% ( 2/ 2)[0m   [30;42mLines: 100.00% (  7/  7)[0m
+App\Http\Requests\Admin\SyncPermissionsRequest
+  [30;42mMethods: 100.00% ( 2/ 2)[0m   [30;42mLines: 100.00% (  5/  5)[0m
+App\Http\Requests\Admin\SyncRolesRequest
+  [30;42mMethods: 100.00% ( 2/ 2)[0m   [30;42mLines: 100.00% (  5/  5)[0m
+App\Http\Requests\Admin\UpdateRoleRequest
+  [30;42mMethods: 100.00% ( 2/ 2)[0m   [30;42mLines: 100.00% (  5/  5)[0m
+App\Http\Requests\Admin\UpdateUserRequest
+  [30;42mMethods: 100.00% ( 2/ 2)[0m   [30;42mLines: 100.00% (  8/  8)[0m
+App\Http\Requests\Auth\LoginRequest
+  [30;42mMethods: 100.00% ( 2/ 2)[0m   [30;42mLines: 100.00% (  5/  5)[0m
+App\Http\Resources\Admin\AuditLogResource
+  [30;42mMethods: 100.00% ( 1/ 1)[0m   [30;42mLines: 100.00% ( 12/ 12)[0m
+App\Http\Resources\Admin\PermissionResource
+  [30;42mMethods: 100.00% ( 1/ 1)[0m   [30;42mLines: 100.00% (  9/  9)[0m
+App\Http\Resources\Admin\RoleResource
+  [30;42mMethods: 100.00% ( 1/ 1)[0m   [30;42mLines: 100.00% (  8/  8)[0m
+App\Http\Resources\Auth\UserResource
+  [30;42mMethods: 100.00% ( 1/ 1)[0m   [30;42mLines: 100.00% ( 11/ 11)[0m
+App\Models\AuditLog
+  [30;42mMethods: 100.00% ( 7/ 7)[0m   [30;42mLines: 100.00% ( 19/ 19)[0m
+App\Models\User
+  [30;42mMethods: 100.00% ( 1/ 1)[0m   [30;42mLines: 100.00% (  6/  6)[0m
+App\Providers\AppServiceProvider
+  [30;42mMethods: 100.00% ( 2/ 2)[0m   [30;42mLines: 100.00% (  7/  7)[0m
+App\Providers\SwaggerUiServiceProvider
+  [37;41mMethods:   0.00% ( 0/ 1)[0m   [30;43mLines:  66.67% (  2/  3)[0m

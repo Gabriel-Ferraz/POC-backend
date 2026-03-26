@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Helpers\Trait\Auditable;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\{StoreRoleRequest, SyncPermissionsRequest, UpdateRoleRequest};
-use App\Http\Resources\RoleResource;
+use App\Http\Resources\Admin\RoleResource;
 use Illuminate\Http\JsonResponse;
 use Spatie\Permission\Models\Role;
 use Symfony\Component\HttpFoundation\Response;

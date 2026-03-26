@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Helpers\Trait\Auditable;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\{StoreUserRequest, SyncPermissionsRequest, SyncRolesRequest, UpdateUserRequest};
-use App\Http\Resources\UserResource;
+use App\Http\Resources\Auth\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -79,7 +79,7 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
-        if ($user->hasRole('super-admin') && ! in_array('super-admin', $request->validated('roles'))) {
+        if ($user->hasRole('super-admin') && !in_array('super-admin', $request->validated('roles'))) {
             return response()->json([
                 'message' => 'Cannot remove super-admin role from this user',
             ], Response::HTTP_FORBIDDEN);

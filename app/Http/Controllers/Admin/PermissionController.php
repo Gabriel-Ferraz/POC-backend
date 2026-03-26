@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\PermissionResource;
+use App\Http\Resources\Admin\PermissionResource;
 use App\Models\Permission;
 use Illuminate\Http\JsonResponse;
 

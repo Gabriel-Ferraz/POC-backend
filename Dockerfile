@@ -58,8 +58,7 @@ COPY --from=frontend-builder /build/public/build ./public/build
 RUN composer run-script post-autoload-dump
 
 # Generate Laravel optimizations
-RUN php artisan config:cache \
-    php artisan event:cache \
+RUN php artisan event:cache \
     && php artisan route:cache
 
 FROM base AS production

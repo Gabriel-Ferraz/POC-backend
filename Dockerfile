@@ -49,7 +49,7 @@ RUN --mount=type=cache,target=/root/.composer/cache,sharing=locked \
     --no-scripts \
     --no-ansi \
     --no-progress \
-    --no-autoloader
+    --optimize-autoloader
 
 # Copy application source
 COPY . .

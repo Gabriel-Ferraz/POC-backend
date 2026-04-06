@@ -9,7 +9,10 @@ echo "Configuring directory permissions..."
 find /app/storage /app/bootstrap/cache -type d -exec chmod g+s {} \;
 
 echo "Creating storage symbolic link..."
-cd /app && php artisan storage:link
+php /app/artisan storage:link --force 2>/dev/null || true
+
+echo "Optimize cache config..."
+php /app/artisan event:cache && php /app/artisan route:cache
 
 echo "Starting supervisor services..."
 exec /usr/bin/supervisord -c /etc/supervisor/supervisord.conf -n

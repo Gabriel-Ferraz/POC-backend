@@ -192,6 +192,77 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Swoole Options
+    |--------------------------------------------------------------------------
+    |
+    | Additional Swoole server options passed directly to the Swoole HTTP server.
+    | dispatch_mode=2 uses fixed mode for stable request dispatching.
+    |
+    */
+
+    'swoole' => [
+        'options' => [
+            // Fixed dispatch mode for stable request routing across workers.
+            'dispatch_mode' => 2,
+
+            // Enable gzip/brotli response compression.
+            'http_compression' => true,
+
+            // Compression level: 1 (fastest, least compressed) to 9 (slowest, most compressed).
+            'http_compression_level' => 6,
+
+            // Minimum response size in bytes to apply compression (avoids overhead on tiny responses).
+            'compression_min_length' => 20,
+
+            // Maximum request payload size (protects against oversized request bodies).
+            'package_max_length' => 2 * 1024 * 1024, // 2MB
+
+            // Maximum file upload size per request.
+            'upload_max_filesize' => 20 * 1024 * 1024, // 20MB
+
+            // Enable HTTP/2, which allows request multiplexing over a single TCP connection.
+            'open_http2_protocol' => true,
+
+            // Root directory for static files.
+            'document_root' => public_path(),
+
+            // Let Swoole serve static files directly, bypassing the PHP/Laravel stack.
+            'enable_static_handler' => true,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Server State File
+    |--------------------------------------------------------------------------
+    |
+    | Path to the JSON file where Octane persists the server state (PID, port,
+    | etc.) between CLI calls. Required for `artisan octane:stop` and
+    | `artisan octane:reload` to locate the running server process.
+    |
+    | @see https://github.com/laravel/octane/pull/853#issuecomment-1999530137
+    |
+    */
+
+    'state_file' => base_path('bootstrap/octane-server-state.json'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Server Output Write Delay
+    |--------------------------------------------------------------------------
+    |
+    | Microseconds to sleep between writes to the server output stream.
+    | A value of 1 prevents busy-waiting on the output thread without
+    | introducing any noticeable delay.
+    |
+    | @see https://github.com/laravel/octane/pull/902
+    |
+    */
+
+    'usleep_between_writing_server_output' => 1,
+
+    /*
+    |--------------------------------------------------------------------------
     | Maximum Execution Time
     |--------------------------------------------------------------------------
     |

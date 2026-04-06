@@ -27,7 +27,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     php8.2-gd \
     php8.2-pgsql \
     php8.2-opcache \
-    php8.2-swoole
+    php8.2-swoole \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 FROM base AS backend-builder
 
@@ -45,8 +47,9 @@ RUN --mount=type=cache,target=/root/.composer/cache,sharing=locked \
     --no-dev \
     --no-interaction \
     --no-scripts \
-    --prefer-dist \
-    --optimize-autoloader
+    --no-ansi \
+    --no-progress \
+    --no-autoloader
 
 # Copy application source
 COPY . .
@@ -54,14 +57,10 @@ COPY . .
 # Copy built frontend assets from frontend-builder stage
 COPY --from=frontend-builder /build/public/build ./public/build
 
-# Run composer scripts (post-autoload-dump, etc.)
-RUN composer run-script post-autoload-dump
-
-# Generate Laravel optimizations
-RUN php artisan event:cache \
-    && php artisan route:cache
-
 FROM base AS production
+
+ARG USER_ID=1000
+ARG GROUP_ID=1000
 
 WORKDIR /app
 
@@ -80,14 +79,15 @@ COPY docker/php/php.ini /etc/php/8.2/cli/php.ini
 COPY docker/nginx/laravel.conf /etc/nginx/sites-available/default
 COPY docker/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY docker/healthcheck.sh /usr/local/bin/healthcheck.sh
 
 RUN chmod +x /usr/local/bin/entrypoint.sh
-
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=60s \
-    CMD curl -f http://localhost/health || exit 1
 
 # Expose ports
 # 80 = Nginx
 EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+    CMD ["/usr/local/bin/healthcheck.sh"]
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

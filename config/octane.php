@@ -202,31 +202,11 @@ return [
 
     'swoole' => [
         'options' => [
-            // Fixed dispatch mode for stable request routing across workers.
             'dispatch_mode' => 2,
-
-            // Enable gzip/brotli response compression.
-            'http_compression' => true,
-
-            // Compression level: 1 (fastest, least compressed) to 9 (slowest, most compressed).
-            'http_compression_level' => 6,
-
-            // Minimum response size in bytes to apply compression (avoids overhead on tiny responses).
-            'compression_min_length' => 20,
-
-            // Maximum request payload size (protects against oversized request bodies).
             'package_max_length' => 2 * 1024 * 1024, // 2MB
-
-            // Maximum file upload size per request.
             'upload_max_filesize' => 20 * 1024 * 1024, // 20MB
-
-            // Enable HTTP/2, which allows request multiplexing over a single TCP connection.
             'open_http2_protocol' => true,
-
-            // Root directory for static files.
             'document_root' => public_path(),
-
-            // Let Swoole serve static files directly, bypassing the PHP/Laravel stack.
             'enable_static_handler' => true,
         ],
     ],

@@ -14,6 +14,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     unzip \
     gnupg \
     openssl \
+    ffmpeg \
     && ln -fs /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime \
     && dpkg-reconfigure -f noninteractive tzdata \
     && add-apt-repository ppa:ondrej/php -y \
@@ -31,17 +32,19 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+FROM composer:2 AS composer
+
 FROM base AS backend-builder
 
 WORKDIR /build
 
-# Copy Composer binary from official image
-COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
+# Copy Composer binary from previous stage (mais rápido que COPY --from=composer:2)
+COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 
-# Copy composer files for dependency installation
+# Copy composer files first (cache layer se não mudarem)
 COPY composer.json composer.lock ./
 
-# Install PHP dependencies (production only)
+# Install PHP dependencies with cache mount
 RUN --mount=type=cache,target=/root/.composer/cache,sharing=locked \
     composer install \
     --no-dev \
@@ -49,13 +52,14 @@ RUN --mount=type=cache,target=/root/.composer/cache,sharing=locked \
     --no-scripts \
     --no-ansi \
     --no-progress \
+    --prefer-dist \
     --optimize-autoloader
 
-# Copy application source
+# Copy application source (só invalida cache se código mudar)
 COPY . .
 
-# Copy built frontend assets from frontend-builder stage
-COPY --from=frontend-builder /build/public/build ./public/build
+# Run post-install scripts
+RUN composer run-script post-autoload-dump
 
 FROM base AS production
 
@@ -81,7 +85,13 @@ COPY docker/supervisor/supervisord.conf /etc/supervisor/supervisord.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY docker/healthcheck.sh /usr/local/bin/healthcheck.sh
 
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh /usr/local/bin/healthcheck.sh
+
+# Create storage directories and set permissions
+RUN mkdir -p storage/app/tts storage/app/temp storage/logs storage/framework/cache storage/framework/sessions storage/framework/views storage/octane \
+    && chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R 775 storage bootstrap/cache \
+    && touch storage/octane/.gitkeep
 
 # Expose ports
 # 80 = Nginx

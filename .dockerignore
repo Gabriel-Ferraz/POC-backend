@@ -20,7 +20,15 @@ vendor
 public/hot
 public/storage
 public/build
+
+# Storage runtime files (exclude all except structure)
 storage/*.key
+storage/app/*
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/testing/*
 
 # Environment
 .env

@@ -15,7 +15,9 @@ return [
 
     'name' => env('APP_NAME', 'Laravel'),
 
-    'version' => file_get_contents(base_path('.release')) ?? 'latest',
+    'version' => env('APP_VERSION', 'v1.0.0'),
+
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
 
     /*
     |--------------------------------------------------------------------------

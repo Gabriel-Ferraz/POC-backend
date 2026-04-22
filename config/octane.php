@@ -224,7 +224,7 @@ return [
     |
     */
 
-    'state_file' => base_path('bootstrap/octane-server-state.json'),
+    'state_file' => storage_path('octane/octane-server-state.json'),
 
     /*
     |--------------------------------------------------------------------------

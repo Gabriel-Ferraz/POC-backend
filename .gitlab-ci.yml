@@ -1,0 +1,20 @@
+include:
+  - project: 'hug/hug-infrastructure-platform-gitops'
+    file: 'templates/.gitlab-ci-template.yml'
+
+stages:
+  - build
+  - deploy
+
+variables:
+  GITOPS_FILE: "apps/ermis_backend/deployment.yaml"
+  DOCKER_IMAGE_NAME: "ermis/backend"
+
+build-job:
+  stage: build
+  extends: .gitops-build-docker
+
+deploy-job:
+  stage: deploy
+  extends: .gitops-update-deploy
+  needs: ["build-job"]

@@ -10,7 +10,8 @@ trait Logger
     {
         $stack = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)[2];
 
-        $className = array_last(explode("\\", $stack['class']));
+        $classParts = explode("\\", $stack['class']);
+        $className = end($classParts);
         $functionName = $stack['function'];
 
         return "{$className}::{$functionName}";

@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->api([
+            \Illuminate\Http\Middleware\HandleCors::class,
             'throttle:api'
         ]);
 

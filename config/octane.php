@@ -87,7 +87,7 @@ return [
         OperationTerminated::class => [
             FlushOnce::class,
             FlushTemporaryContainerInstances::class,
-            DisconnectFromDatabases::class,
+                // DisconnectFromDatabases::class,
             CollectGarbage::class,
         ],
 
@@ -188,7 +188,7 @@ return [
     |
     */
 
-    'garbage' => 50,
+    'garbage' => 100,
 
     /*
     |--------------------------------------------------------------------------
@@ -203,43 +203,8 @@ return [
     'swoole' => [
         'options' => [
             'dispatch_mode' => 2,
-            'package_max_length' => 2 * 1024 * 1024, // 2MB
-            'upload_max_filesize' => 20 * 1024 * 1024, // 20MB
-            'open_http2_protocol' => true,
-            'document_root' => public_path(),
-            'enable_static_handler' => true,
         ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Server State File
-    |--------------------------------------------------------------------------
-    |
-    | Path to the JSON file where Octane persists the server state (PID, port,
-    | etc.) between CLI calls. Required for `artisan octane:stop` and
-    | `artisan octane:reload` to locate the running server process.
-    |
-    | @see https://github.com/laravel/octane/pull/853#issuecomment-1999530137
-    |
-    */
-
-    'state_file' => storage_path('octane/octane-server-state.json'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Server Output Write Delay
-    |--------------------------------------------------------------------------
-    |
-    | Microseconds to sleep between writes to the server output stream.
-    | A value of 1 prevents busy-waiting on the output thread without
-    | introducing any noticeable delay.
-    |
-    | @see https://github.com/laravel/octane/pull/902
-    |
-    */
-
-    'usleep_between_writing_server_output' => 1,
 
     /*
     |--------------------------------------------------------------------------

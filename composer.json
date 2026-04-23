@@ -64,27 +64,28 @@
             "./vendor/bin/pint"
         ],
         "test": [
-            "@php artisan test --colors=always"
+            "@php artisan test --colors=always --profile --order-by=defects"
         ],
         "test:ci": [
-            "@php artisan test --ci --colors=always"
+            "@php artisan test --ci --colors=always --profile"
         ],
         "test:unit": [
-            "@php artisan test --colors=always --testsuite=Unit"
+            "@php artisan test --colors=always --testsuite=Unit --profile --order-by=defects"
         ],
         "test:feature": [
-            "@php artisan test --colors=always --testsuite=Feature"
+            "@php artisan test --colors=always --testsuite=Feature --profile --order-by=defects"
+        ],
+        "test:failed": [
+            "@php artisan test --colors=always --profile --order-by=defects --bail"
         ],
         "test:coverage": [
-            "@php artisan test --colors=always --coverage --min=80"
+            "@php artisan test --colors=always --coverage --min=80 --profile"
         ],
         "db:build": [
-            "@php artisan migrate --seed",
-            "@php artisan storage:link || true"
+            "@php artisan migrate --seed"
         ],
         "db:rebuild": [
-            "@php artisan migrate:fresh --seed",
-            "@php artisan storage:link || true"
+            "@php artisan migrate:fresh --seed"
         ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",

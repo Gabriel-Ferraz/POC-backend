@@ -2,17 +2,25 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
+      args:
+        UID: ${UID:-1000}
+        GID: ${GID:-1000}
     ports:
-      - "3333:80"
+      - "3333:3333"
     volumes:
       - .:/app
-      - app_vendor:/app/vendor
     environment:
+      CACHE_STORE: redis
+      QUEUE_CONNECTION: redis
       DB_CONNECTION: pgsql
       DB_USERNAME: postgres
       DB_HOST: postgres
       DB_PORT: 5432
+      SEED_DB: true
+      REDIS_CLIENT: phpredis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       CHOKIDAR_USEPOLLING: "true"
       CHOKIDAR_INTERVAL: "300"
     env_file:
@@ -20,10 +28,26 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - network
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  test:
+    image: registry.dev.hugyourcustomer.ai/huglabs/php8.2-ci:latest
+    working_dir: /app
+    command: tail -f /dev/null
+    stdin_open: true
+    tty: true
+    environment:
+      APP_ENV: testing
+    volumes:
+      - .:/app
+    networks:
+      - network
+
 
   postgres:
     image: postgres:15-alpine
@@ -43,11 +67,21 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - network
+
 networks:
   network:
     driver: bridge
 
 volumes:
-  app_vendor:
   postgres_data:
+    driver: local
+  redis_data:
     driver: local

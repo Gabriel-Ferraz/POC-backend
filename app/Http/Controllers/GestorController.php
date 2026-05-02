@@ -81,7 +81,7 @@ class GestorController extends Controller
         $solicitacao = SolicitacaoPagamento::with([
             'empenho.contrato.fornecedor',
             'solicitante',
-            'anexos.avaliador',
+            'anexos.aprovador',
         ])->findOrFail($id);
 
         return response()->json([
@@ -89,7 +89,7 @@ class GestorController extends Controller
                 'id' => $solicitacao->id,
                 'numero' => $solicitacao->numero,
                 'valor' => $solicitacao->valor,
-                'status' => $solicitacao->status,
+                'status' => $solicitacao->status_label,
                 'data' => $solicitacao->created_at->format('d/m/Y H:i'),
                 'solicitante' => $solicitacao->solicitante->name,
                 'fornecedor' => $solicitacao->empenho->contrato->fornecedor->nome,
@@ -107,28 +107,16 @@ class GestorController extends Controller
                 return [
                     'id' => $anexo->id,
                     'tipo_anexo' => $anexo->tipo_anexo,
-                    'tipo_anexo_label' => $this->getLabelTipoAnexo($anexo->tipo_anexo),
-                    'arquivo' => $anexo->arquivo,
-                    'status' => $anexo->status,
+                    'tipo_anexo_label' => $anexo->tipo_anexo_label,
+                    'arquivo_path' => $anexo->arquivo_path ? '/storage/' . $anexo->arquivo_path : null,
+                    'arquivo_nome' => $anexo->arquivo_nome,
+                    'status' => $anexo->status_label,
                     'motivo_recusa' => $anexo->motivo_recusa,
-                    'avaliado_por' => $anexo->avaliador?->name,
-                    'avaliado_em' => $anexo->avaliado_em?->format('d/m/Y H:i'),
-                    'data_envio' => $anexo->created_at->format('d/m/Y H:i'),
+                    'aprovado_por' => $anexo->aprovador?->name,
+                    'data_aprovacao' => $anexo->data_aprovacao?->format('d/m/Y H:i'),
+                    'data_envio' => $anexo->data_envio?->format('d/m/Y'),
                 ];
             }),
         ]);
-    }
-
-    private function getLabelTipoAnexo(string $tipo): string
-    {
-        $labels = [
-            'documento_fiscal' => 'Documento Fiscal / Recibo',
-            'certidao_negativa_debitos' => 'Certidão Negativa de Débitos',
-            'certidao_tributaria' => 'Certidão Tributária',
-            'guia_previdencia_social' => 'Guia de Previdência Social (GPS)',
-            'fgts' => 'FGTS',
-        ];
-
-        return $labels[$tipo] ?? $tipo;
     }
 }

@@ -46,9 +46,9 @@ return new class extends Migration
                 'cancelada'
             ])->default('pendente');
 
-            $table->timestamp('cancelada_em')->nullable();
+            $table->date('cancelada_em')->nullable();
             $table->text('motivo_cancelamento')->nullable();
-            $table->timestamp('paga_em')->nullable();
+            $table->date('paga_em')->nullable();
 
             $table->timestamps();
         });

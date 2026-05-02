@@ -15,15 +15,18 @@ class AnexoSolicitacao extends Model
     protected $fillable = [
         'solicitacao_id',
         'tipo_anexo',
-        'arquivo',
+        'arquivo_path',
+        'arquivo_nome',
         'status',
+        'data_envio',
         'motivo_recusa',
-        'avaliado_por',
-        'avaliado_em',
+        'aprovado_por',
+        'data_aprovacao',
     ];
 
     protected $casts = [
-        'avaliado_em' => 'datetime',
+        'data_envio' => 'date',
+        'data_aprovacao' => 'datetime',
     ];
 
     public function solicitacao(): BelongsTo
@@ -31,8 +34,34 @@ class AnexoSolicitacao extends Model
         return $this->belongsTo(SolicitacaoPagamento::class, 'solicitacao_id');
     }
 
-    public function avaliador(): BelongsTo
+    public function aprovador(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'avaliado_por');
+        return $this->belongsTo(User::class, 'aprovado_por');
+    }
+
+    public function getTipoAnexoLabelAttribute(): string
+    {
+        $labels = [
+            'documento_fiscal' => 'Documento Fiscal (NF, Recibo, Guias, Faturas, etc.)',
+            'certidao_negativa_debitos' => 'Certidão Negativa de Débitos',
+            'certidao_tributaria' => 'Certidão Tributária',
+            'guia_previdencia_social' => 'Guia de Previdência Social',
+            'fgts' => 'FGTS',
+        ];
+
+        return $labels[$this->tipo_anexo] ?? $this->tipo_anexo;
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        $labels = [
+            'pendente' => 'Pendente',
+            'anexo_cadastrado' => 'Anexo Cadastrado',
+            'aguardando_aprovacao' => 'Aguardando Aprovação',
+            'aprovado' => 'Aprovado',
+            'recusado' => 'Recusado',
+        ];
+
+        return $labels[$this->status] ?? $this->status;
     }
 }

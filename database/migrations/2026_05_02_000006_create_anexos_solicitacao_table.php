@@ -18,7 +18,8 @@ return new class extends Migration
                 'guia_previdencia_social',
                 'fgts'
             ]);
-            $table->string('arquivo')->nullable();
+            $table->string('arquivo_path')->nullable();
+            $table->string('arquivo_nome')->nullable();
             $table->enum('status', [
                 'pendente',
                 'anexo_cadastrado',
@@ -26,9 +27,10 @@ return new class extends Migration
                 'aprovado',
                 'recusado'
             ])->default('pendente');
+            $table->date('data_envio')->nullable();
             $table->text('motivo_recusa')->nullable();
-            $table->foreignId('avaliado_por')->nullable()->constrained('users')->nullOnDelete();
-            $table->timestamp('avaliado_em')->nullable();
+            $table->foreignId('aprovado_por')->nullable()->constrained('users')->nullOnDelete();
+            $table->datetime('data_aprovacao')->nullable();
             $table->timestamps();
         });
     }

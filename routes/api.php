@@ -56,16 +56,17 @@ Route::middleware('auth:sanctum')
         Route::prefix('solicitacoes/{solicitacaoId}/anexos')
             ->group(function () {
                 Route::get('/', [AnexoController::class, 'index']);
-                Route::post('/', [AnexoController::class, 'upload']);
-                Route::post('/enviar-todos', [AnexoController::class, 'enviarTodos']);
+                Route::post('/enviar-todos', [AnexoController::class, 'enviarTodos']); // ANTES das rotas com {anexoId}
+                Route::post('/{anexoId}/upload', [AnexoController::class, 'upload']);
+                Route::post('/{anexoId}', [AnexoController::class, 'remover']);
+                Route::delete('/{anexoId}', [AnexoController::class, 'remover']);
+                Route::get('/{anexoId}/download', [AnexoController::class, 'download']);
             });
 
         Route::prefix('anexos')
             ->group(function () {
                 Route::post('/{anexoId}/aprovar', [AnexoController::class, 'aprovar']);
                 Route::post('/{anexoId}/recusar', [AnexoController::class, 'recusar']);
-                Route::delete('/{anexoId}', [AnexoController::class, 'destroy']);
-                Route::get('/{anexoId}/download', [AnexoController::class, 'download']);
             });
 
         // Gestor - Aprovação de Anexos

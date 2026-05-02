@@ -155,7 +155,7 @@ class SolicitacaoPagamentoController extends Controller
         $solicitacao = SolicitacaoPagamento::with([
             'empenho.contrato.fornecedor',
             'solicitante',
-            'anexos.avaliador',
+            'anexos.aprovador',
             'tramites.usuario',
         ])->findOrFail($id);
 
@@ -163,87 +163,138 @@ class SolicitacaoPagamentoController extends Controller
             'solicitacao' => [
                 'id' => $solicitacao->id,
                 'numero' => $solicitacao->numero,
-                'valor' => $solicitacao->valor,
                 'status' => $solicitacao->status,
-                'data' => $solicitacao->created_at->format('d/m/Y H:i'),
-                'observacao' => $solicitacao->observacao,
-                'solicitante' => $solicitacao->solicitante->name,
-                'fornecedor' => $solicitacao->empenho->contrato->fornecedor->nome,
-                'empenho' => $solicitacao->empenho->numero,
-                'contrato' => $solicitacao->empenho->contrato->numero,
-                'documento_fiscal' => [
-                    'tipo' => $solicitacao->tipo_documento,
-                    'numero' => $solicitacao->numero_documento,
-                    'serie' => $solicitacao->serie,
-                    'data_emissao' => $solicitacao->data_emissao_documento->format('d/m/Y'),
-                    'observacao' => $solicitacao->observacao_documento,
+                'status_label' => $solicitacao->status_label,
+                'valor' => $solicitacao->valor,
+                'created_at' => $solicitacao->created_at->format('d/m/Y'),
+
+                // DADOS GERAIS
+                'solicitante' => [
+                    'id' => $solicitacao->solicitante->id,
+                    'name' => $solicitacao->solicitante->name,
+                    'cpf' => $solicitacao->solicitante->cpf,
                 ],
-                'forma_pagamento' => [
-                    'tipo' => $solicitacao->forma_pagamento,
-                    'banco' => $solicitacao->banco,
-                    'agencia' => $solicitacao->agencia . ($solicitacao->digito_agencia ? '-' . $solicitacao->digito_agencia : ''),
-                    'conta' => $solicitacao->conta . ($solicitacao->digito_conta ? '-' . $solicitacao->digito_conta : ''),
-                    'operacao' => $solicitacao->operacao,
-                    'cidade' => $solicitacao->cidade_banco,
-                    'observacao_pagamento' => $solicitacao->observacao_pagamento,
+                'empenho' => [
+                    'id' => $solicitacao->empenho->id,
+                    'numero' => $solicitacao->empenho->numero,
                 ],
+                'fornecedor' => [
+                    'id' => $solicitacao->empenho->contrato->fornecedor->id,
+                    'cnpj' => $solicitacao->empenho->contrato->fornecedor->cnpj,
+                    'razao_social' => $solicitacao->empenho->contrato->fornecedor->nome,
+                ],
+                'contrato' => [
+                    'id' => $solicitacao->empenho->contrato->id,
+                    'numero' => $solicitacao->empenho->contrato->numero,
+                ],
+
+                // DOCUMENTO FISCAL
+                'documento_fiscal_tipo' => $solicitacao->tipo_documento,
+                'documento_fiscal_numero' => $solicitacao->numero_documento,
+                'documento_fiscal_serie' => $solicitacao->serie,
+                'documento_fiscal_data_emissao' => $solicitacao->data_emissao_documento->format('d/m/Y'),
+                'documento_fiscal_observacao' => $solicitacao->observacao_documento,
+
+                // FORMA DE PAGAMENTO
+                'forma_pagamento_tipo' => $solicitacao->forma_pagamento,
+                'banco' => $solicitacao->banco,
+                'agencia' => $solicitacao->agencia,
+                'agencia_digito' => $solicitacao->digito_agencia,
+                'conta' => $solicitacao->conta,
+                'conta_digito' => $solicitacao->digito_conta,
+                'operacao' => $solicitacao->operacao,
+                'cidade_banco' => $solicitacao->cidade_banco,
+                'observacao_pagamento' => $solicitacao->observacao_pagamento,
+
+                // ANDAMENTO
+                'andamento' => $solicitacao->andamento,
+
+                // TRÂMITES
+                'tramites' => $solicitacao->tramites->map(function ($tramite) {
+                    return [
+                        'id' => $tramite->id,
+                        'fase' => $tramite->fase,
+                        'created_at' => $tramite->created_at->format('d/m/Y H:i'),
+                        'usuario' => $tramite->usuario ? [
+                            'id' => $tramite->usuario->id,
+                            'name' => $tramite->usuario->name,
+                        ] : null,
+                        'observacao' => $tramite->observacao,
+                        'motivo' => $tramite->motivo,
+                    ];
+                }),
+
+                // ANEXOS PAGAMENTO
+                'anexos' => $solicitacao->anexos->map(function ($anexo) {
+                    return [
+                        'id' => $anexo->id,
+                        'tipo_anexo' => $anexo->tipo_anexo,
+                        'tipo_anexo_label' => $anexo->tipo_anexo_label,
+                        'arquivo_nome' => $anexo->arquivo_nome,
+                        'arquivo_path' => $anexo->arquivo_path ? '/storage/' . $anexo->arquivo_path : null,
+                        'status' => $anexo->status_label,
+                        'data_envio' => $anexo->data_envio?->format('d/m/Y'),
+                        'avaliado_por' => $anexo->aprovador?->name,
+                        'motivo_recusa' => $anexo->motivo_recusa,
+                    ];
+                }),
+
+                // PAGAMENTO REALIZADO
+                'pagamento_realizado' => $solicitacao->paga_em ? [
+                    'data_hora' => $solicitacao->paga_em->format('d/m/Y H:i'),
+                    'valor' => $solicitacao->valor,
+                ] : null,
+
+                // CANCELAMENTO
                 'cancelamento' => $solicitacao->cancelada_em ? [
-                    'data' => $solicitacao->cancelada_em->format('d/m/Y H:i'),
+                    'data' => $solicitacao->cancelada_em->format('d/m/Y'),
                     'motivo' => $solicitacao->motivo_cancelamento,
                 ] : null,
-                'pagamento' => $solicitacao->paga_em ? [
-                    'data' => $solicitacao->paga_em->format('d/m/Y H:i'),
-                ] : null,
             ],
-            'anexos' => $solicitacao->anexos->map(function ($anexo) {
-                return [
-                    'id' => $anexo->id,
-                    'tipo_anexo' => $anexo->tipo_anexo,
-                    'arquivo' => $anexo->arquivo,
-                    'status' => $anexo->status,
-                    'motivo_recusa' => $anexo->motivo_recusa,
-                    'avaliado_por' => $anexo->avaliador?->name,
-                    'avaliado_em' => $anexo->avaliado_em?->format('d/m/Y H:i'),
-                    'data_envio' => $anexo->created_at->format('d/m/Y H:i'),
-                ];
-            }),
-            'tramites' => $solicitacao->tramites->map(function ($tramite) {
-                return [
-                    'id' => $tramite->id,
-                    'fase' => $tramite->fase,
-                    'usuario' => $tramite->usuario?->name,
-                    'observacao' => $tramite->observacao,
-                    'motivo' => $tramite->motivo,
-                    'data' => $tramite->created_at->format('d/m/Y H:i'),
-                ];
-            }),
         ]);
     }
 
     public function cancelar(Request $request, int $id): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'motivo' => 'required|string|min:10',
+            'data_cancelamento' => 'required|date|before_or_equal:today',
+            'motivo' => 'required|string|min:10|max:500',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Motivo do cancelamento é obrigatório',
+                'message' => 'Os dados fornecidos são inválidos',
                 'errors' => $validator->errors(),
             ], 422);
         }
 
-        $solicitacao = SolicitacaoPagamento::with('empenho')->findOrFail($id);
+        $solicitacao = SolicitacaoPagamento::with(['empenho', 'solicitante'])->findOrFail($id);
 
+        // Verificar se o usuário é o dono da solicitação
+        if ($solicitacao->solicitante_id !== $request->user()->id) {
+            return response()->json([
+                'message' => 'Você não tem permissão para cancelar esta solicitação',
+            ], 403);
+        }
+
+        // Verificar se já está cancelada
         if ($solicitacao->status === 'cancelada') {
             return response()->json([
                 'message' => 'Solicitação já está cancelada',
             ], 400);
         }
 
+        // Verificar se já foi paga
         if ($solicitacao->status === 'pagamento_realizado') {
             return response()->json([
                 'message' => 'Não é possível cancelar uma solicitação já paga',
+            ], 400);
+        }
+
+        // Verificar se status é pendente
+        if ($solicitacao->status !== 'pendente') {
+            return response()->json([
+                'message' => 'Não é possível cancelar uma solicitação com status diferente de Pendente',
             ], 400);
         }
 
@@ -252,23 +303,31 @@ class SolicitacaoPagamentoController extends Controller
         try {
             $solicitacao->update([
                 'status' => 'cancelada',
-                'cancelada_em' => now(),
+                'cancelada_em' => $request->data_cancelamento,
                 'motivo_cancelamento' => $request->motivo,
             ]);
 
             $solicitacao->empenho->liberarSaldo($solicitacao->valor);
 
             $solicitacao->registrarTramite(
-                'Solicitação Cancelada',
+                'Cancelamento',
                 $request->user()->id,
-                null,
-                $request->motivo
+                $request->motivo,
+                null
             );
 
             DB::commit();
 
             return response()->json([
                 'message' => 'Solicitação cancelada com sucesso',
+                'solicitacao' => [
+                    'id' => $solicitacao->id,
+                    'numero' => $solicitacao->numero,
+                    'status' => 'Cancelada',
+                    'data_cancelamento' => $solicitacao->cancelada_em->format('Y-m-d'),
+                    'motivo_cancelamento' => $solicitacao->motivo_cancelamento,
+                    'updated_at' => $solicitacao->updated_at->toISOString(),
+                ],
             ]);
         } catch (\Exception $e) {
             DB::rollBack();

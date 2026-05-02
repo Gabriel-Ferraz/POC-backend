@@ -149,8 +149,10 @@ class POCDemoSeeder extends Seeder
             AnexoSolicitacao::create([
                 'solicitacao_id' => $solicitacao1->id,
                 'tipo_anexo' => $tipo,
-                'arquivo' => 'anexos/demo/' . $tipo . '.pdf',
+                'arquivo_path' => 'anexos/demo/' . $tipo . '.pdf',
+                'arquivo_nome' => $tipo . '.pdf',
                 'status' => $status,
+                'data_envio' => '2024-01-25',
             ]);
         }
 

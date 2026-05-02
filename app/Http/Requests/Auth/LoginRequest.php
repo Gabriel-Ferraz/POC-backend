@@ -22,8 +22,18 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => 'required|email',
+            'email' => 'nullable|email',
+            'cpf' => 'nullable|string',
             'password' => 'required|string|min:6',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if (!$this->email && !$this->cpf) {
+                $validator->errors()->add('email', 'CPF ou Email é obrigatório');
+            }
+        });
     }
 }

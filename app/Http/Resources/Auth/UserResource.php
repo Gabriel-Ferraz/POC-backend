@@ -25,22 +25,17 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'cpf' => $this->cpf,
+            'perfil' => $this->perfil,
             'is_active' => $this->is_active,
             'last_login_at' => $this->last_login_at,
-            'roles' => $this->getRoleNames(),
-            'permissions' => $this->getAllPermissions()->pluck('name'),
-            'has_active_subscription' => $hasSubscription,
-            'subscription' => $activeSubscription ? [
-                'id' => $activeSubscription->id,
-                'status' => $activeSubscription->status,
-                'started_at' => $activeSubscription->started_at,
-                'expires_at' => $activeSubscription->expires_at,
-                'plan' => $activeSubscription->plan ? [
-                    'id' => $activeSubscription->plan->id,
-                    'name' => $activeSubscription->plan->name,
-                    'slug' => $activeSubscription->plan->slug,
-                ] : null,
-            ] : null,
+            'fornecedor' => $this->whenLoaded('fornecedor', function () {
+                return $this->fornecedor ? [
+                    'id' => $this->fornecedor->id,
+                    'nome' => $this->fornecedor->nome,
+                    'cnpj' => $this->fornecedor->cnpj,
+                ] : null;
+            }),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

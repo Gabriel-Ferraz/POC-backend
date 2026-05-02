@@ -12,15 +12,15 @@ if [ ! -d "vendor" ] || [ "composer.json" -nt "vendor/autoload.php" ]; then
 fi
 
 echo "Running migrations..."
-php artisan migrate --no-interaction
+php artisan migrate:fresh --force --no-interaction
 
 echo "Creating storage symlink..."
 php artisan storage:link 2>/dev/null || true
 
 if [ "${SEED_DB:-false}" = "true" ]; then
     echo "Seeding database..."
-    php artisan db:seed --no-interaction
+    php artisan db:seed --force --no-interaction
 fi
 
-echo "Starting development services..."
-exec composer run dev:async
+echo "Starting Laravel development server..."
+exec php artisan serve --host=0.0.0.0 --port=3333

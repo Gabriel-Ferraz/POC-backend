@@ -211,6 +211,12 @@ class ChamadoController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        \Log::info('ChamadoController::store iniciado', [
+            'modulo' => $request->input('modulo'),
+            'assunto' => substr($request->input('assunto'), 0, 50),
+            'has_anexos' => $request->hasFile('anexos'),
+        ]);
+
         $validator = Validator::make($request->all(), [
             'modulo' => 'required|string|max:255',
             'assunto' => 'required|string',
@@ -219,6 +225,9 @@ class ChamadoController extends Controller
         ]);
 
         if ($validator->fails()) {
+            \Log::warning('ChamadoController::store validação falhou', [
+                'errors' => $validator->errors()->toArray(),
+            ]);
             return response()->json([
                 'message' => 'Dados inválidos',
                 'errors' => $validator->errors(),
@@ -229,6 +238,7 @@ class ChamadoController extends Controller
 
         try {
             $user = $request->user();
+            \Log::info('ChamadoController::store user', ['user_id' => $user->id]);
 
             // Criar chamado (assunto é TEXT grande, não tem mensagem separada)
             $chamado = Chamado::create([
@@ -266,6 +276,8 @@ class ChamadoController extends Controller
 
             DB::commit();
 
+            \Log::info('ChamadoController::store sucesso', ['chamado_id' => $chamado->id]);
+
             return response()->json([
                 'message' => 'Chamado criado com sucesso',
                 'chamado' => [
@@ -273,7 +285,7 @@ class ChamadoController extends Controller
                     'protocolo' => '#'.$chamado->id,
                     'modulo' => $chamado->modulo,
                     'assunto' => $chamado->assunto,
-                    'usuario' => $user->name.' ('.$this->getPerfilLabel($user->perfil).')',
+                    'usuario' => $user->name,
                     'status' => $chamado->status,
                     'data_cadastro' => $chamado->created_at->format('d/m/Y H:i'),
                     'data_abertura' => $chamado->created_at->format('d/m/Y'),
@@ -283,9 +295,15 @@ class ChamadoController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
+            \Log::error('ChamadoController::store exception', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
             return response()->json([
                 'message' => 'Erro ao criar chamado',
-                'error' => $e->getMessage(),
+                'error' => config('app.debug') ? $e->getMessage() : null,
             ], 500);
         }
     }
@@ -507,35 +525,58 @@ class ChamadoController extends Controller
 
     public function downloadAnexo(Request $request, int $id)
     {
-        $anexo = \App\Models\AnexoChamado::findOrFail($id);
-        $user = $request->user();
-        $chamado = $anexo->chamado;
+        try {
+            \Log::info('downloadAnexo iniciado', ['anexo_id' => $id]);
 
-        // Verificar permissão: Criador do chamado OU Gestor
-        $perfisGestores = ['gestor_suporte', 'gestor_contrato'];
-        $podeVisualizar = $chamado->usuario_id === $user->id || in_array($user->perfil, $perfisGestores);
+            $anexo = \App\Models\AnexoChamado::findOrFail($id);
+            \Log::info('Anexo encontrado', ['caminho' => $anexo->caminho]);
 
-        if (!$podeVisualizar) {
+            $user = $request->user();
+            \Log::info('Usuario', ['user_id' => $user->id, 'perfil' => $user->perfil]);
+
+            $chamado = $anexo->chamado;
+            \Log::info('Chamado', ['chamado_id' => $chamado->id, 'usuario_id' => $chamado->usuario_id]);
+
+            // Verificar permissão: Criador do chamado OU Gestor
+            $perfisGestores = ['gestor_suporte', 'gestor_contrato'];
+            $podeVisualizar = $chamado->usuario_id === $user->id || in_array($user->perfil, $perfisGestores);
+
+            if (!$podeVisualizar) {
+                \Log::warning('Sem permissao');
+                return response()->json([
+                    'message' => 'Você não tem permissão para visualizar este anexo',
+                ], 403);
+            }
+
+            if (!$anexo->caminho) {
+                \Log::warning('Caminho vazio');
+                return response()->json([
+                    'message' => 'Anexo não encontrado',
+                ], 404);
+            }
+
+            if (!Storage::disk('public')->exists($anexo->caminho)) {
+                \Log::warning('Arquivo nao existe no storage');
+                return response()->json([
+                    'message' => 'Arquivo não encontrado no servidor',
+                ], 404);
+            }
+
+            $path = Storage::disk('public')->path($anexo->caminho);
+            \Log::info('Iniciando download', ['path' => $path, 'nome' => $anexo->nome_original]);
+
+            return response()->download($path, $anexo->nome_original);
+        } catch (\Exception $e) {
+            \Log::error('Erro no downloadAnexo', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
             return response()->json([
-                'message' => 'Você não tem permissão para visualizar este anexo',
-            ], 403);
+                'message' => 'Erro ao baixar anexo',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        if (!$anexo->caminho) {
-            return response()->json([
-                'message' => 'Anexo não encontrado',
-            ], 404);
-        }
-
-        if (!Storage::disk('public')->exists($anexo->caminho)) {
-            return response()->json([
-                'message' => 'Arquivo não encontrado no servidor',
-            ], 404);
-        }
-
-        return response()->download(
-            Storage::disk('public')->path($anexo->caminho),
-            $anexo->nome_original
-        );
     }
 }

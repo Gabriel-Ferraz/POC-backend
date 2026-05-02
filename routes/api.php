@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\{
+    AdminController,
     AnexoController,
     ChamadoController,
     FornecedorController,
@@ -116,5 +117,24 @@ Route::middleware('auth:sanctum')
                         Route::post('/{id}/dotacoes', [OrcamentarioController::class, 'adicionarDotacao']);
                         Route::get('/{id}/pdf', [OrcamentarioController::class, 'gerarPdf']);
                     });
+            });
+
+        // Painel Administrativo (apenas gestor_suporte e operador_pmsjp)
+        Route::prefix('admin')
+            ->group(function () {
+                // Criar usuário
+                Route::post('/usuarios', [AdminController::class, 'criarUsuario']);
+
+                // Criar fornecedor + responsável técnico
+                Route::post('/fornecedores', [AdminController::class, 'criarFornecedor']);
+
+                // Listar fornecedores (para dropdown)
+                Route::get('/fornecedores', [AdminController::class, 'listarFornecedores']);
+
+                // Criar empenho
+                Route::post('/empenhos', [AdminController::class, 'criarEmpenho']);
+
+                // Atualizar status de solicitação
+                Route::post('/solicitacoes/{id}/status', [AdminController::class, 'atualizarStatusSolicitacao']);
             });
     });

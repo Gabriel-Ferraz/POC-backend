@@ -18,6 +18,10 @@ class Chamado extends Model
         'status',
         'data_ultima_resposta',
         'data_conclusao',
+        'navegador',
+        'sistema_operacional',
+        'ip_origem',
+        'user_agent',
     ];
 
     protected $casts = [

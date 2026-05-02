@@ -28,6 +28,7 @@ class User extends Authenticatable
         'perfil',
         'is_active',
         'last_login_at',
+        'fornecedor_id',
     ];
 
     /**

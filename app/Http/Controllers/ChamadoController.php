@@ -161,19 +161,45 @@ class ChamadoController extends Controller
 
         return response()->json([
             'chamados' => $chamados->map(function ($chamado) use ($user) {
+                // Determinar quem enviou a última mensagem
+                $ultimaMensagem = $chamado->mensagens()->orderBy('created_at', 'desc')->first();
+                $ultimaMensagemPor = null;
+                $temRespostaPendente = false;
+
+                if ($ultimaMensagem) {
+                    $perfisGestores = ['gestor_suporte', 'gestor_contrato'];
+                    $mensagemDeGestor = in_array($ultimaMensagem->usuario->perfil, $perfisGestores);
+
+                    $ultimaMensagemPor = $mensagemDeGestor ? 'gestor' : 'usuario';
+
+                    // Se a última mensagem foi de um gestor e o chamado não está concluído
+                    // e o usuário logado é o criador do chamado
+                    if ($mensagemDeGestor &&
+                        $chamado->status !== 'concluido' &&
+                        $chamado->usuario_id === $user->id) {
+                        $temRespostaPendente = true;
+                    }
+                }
+
                 return [
                     'id' => $chamado->id,
                     'protocolo' => '#'.$chamado->id,
                     'modulo' => $chamado->modulo,
                     'assunto' => $chamado->assunto,
-                    'usuario' => $chamado->usuario->name.' ('.$this->getPerfilLabel($chamado->usuario->perfil).')',
+                    'usuario' => $chamado->usuario->name,
+                    'usuario_id' => $chamado->usuario_id,
                     'status' => $chamado->status,
                     'status_label' => $this->getStatusLabel($chamado->status),
                     'data_abertura' => $chamado->created_at->format('d/m/Y'),
                     'data_cadastro' => $chamado->created_at->format('d/m/Y H:i'),
                     'data_ultima_resposta' => $chamado->data_ultima_resposta?->format('d/m/Y H:i'),
+                    'data_conclusao' => $chamado->data_conclusao?->format('d/m/Y H:i'),
                     'total_mensagens' => $chamado->mensagens()->count(),
                     'total_anexos' => $chamado->anexos()->count(),
+
+                    // NOVOS CAMPOS para controle de cores dos ícones
+                    'ultima_mensagem_por' => $ultimaMensagemPor,
+                    'tem_resposta_pendente' => $temRespostaPendente,
                 ];
             }),
         ]);
@@ -240,12 +266,22 @@ class ChamadoController extends Controller
             $user = $request->user();
             \Log::info('ChamadoController::store user', ['user_id' => $user->id]);
 
+            // Capturar informações do sistema
+            $userAgent = $request->header('User-Agent');
+            $navegador = $this->detectarNavegador($userAgent);
+            $sistemaOperacional = $this->detectarSO($userAgent);
+            $ip = $request->ip();
+
             // Criar chamado (assunto é TEXT grande, não tem mensagem separada)
             $chamado = Chamado::create([
                 'usuario_id' => $user->id,
                 'modulo' => $request->modulo,
                 'assunto' => $request->assunto,
                 'status' => 'aberto',
+                'navegador' => $navegador,
+                'sistema_operacional' => $sistemaOperacional,
+                'ip_origem' => $ip,
+                'user_agent' => $userAgent,
             ]);
 
             // Criar mensagem de abertura na timeline (com o texto do assunto)
@@ -361,6 +397,14 @@ class ChamadoController extends Controller
                 'mensagem_inicial' => $chamado->assunto,
             ],
             'timeline' => $timeline,
+            // NOVO: Log do sistema
+            'log_sistema' => [
+                'navegador' => $chamado->navegador ?? 'Não disponível',
+                'sistema_operacional' => $chamado->sistema_operacional ?? 'Não disponível',
+                'ip' => $chamado->ip_origem ?? 'Não disponível',
+                'data_hora_acesso' => $chamado->created_at->format('d/m/Y H:i:s'),
+                'user_agent' => $chamado->user_agent ?? 'Não disponível',
+            ],
         ]);
     }
 
@@ -578,5 +622,73 @@ class ChamadoController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Detectar navegador a partir do User-Agent
+     */
+    private function detectarNavegador(?string $userAgent): string
+    {
+        if (!$userAgent) {
+            return 'Desconhecido';
+        }
+
+        if (str_contains($userAgent, 'Edg')) {
+            return 'Microsoft Edge';
+        }
+        if (str_contains($userAgent, 'Chrome')) {
+            return 'Google Chrome';
+        }
+        if (str_contains($userAgent, 'Firefox')) {
+            return 'Mozilla Firefox';
+        }
+        if (str_contains($userAgent, 'Safari') && !str_contains($userAgent, 'Chrome')) {
+            return 'Safari';
+        }
+        if (str_contains($userAgent, 'Opera') || str_contains($userAgent, 'OPR')) {
+            return 'Opera';
+        }
+
+        return 'Outro';
+    }
+
+    /**
+     * Detectar sistema operacional a partir do User-Agent
+     */
+    private function detectarSO(?string $userAgent): string
+    {
+        if (!$userAgent) {
+            return 'Desconhecido';
+        }
+
+        if (str_contains($userAgent, 'Windows NT 10.0')) {
+            return 'Windows 10/11';
+        }
+        if (str_contains($userAgent, 'Windows NT 6.3')) {
+            return 'Windows 8.1';
+        }
+        if (str_contains($userAgent, 'Windows NT 6.2')) {
+            return 'Windows 8';
+        }
+        if (str_contains($userAgent, 'Windows NT 6.1')) {
+            return 'Windows 7';
+        }
+        if (str_contains($userAgent, 'Windows')) {
+            return 'Windows';
+        }
+        if (str_contains($userAgent, 'Mac OS X')) {
+            return 'macOS';
+        }
+        if (str_contains($userAgent, 'Linux')) {
+            return 'Linux';
+        }
+        if (str_contains($userAgent, 'Android')) {
+            return 'Android';
+        }
+        if (str_contains($userAgent, 'iPhone') || str_contains($userAgent, 'iPad')) {
+            return 'iOS';
+        }
+
+        return 'Outro';
     }
 }

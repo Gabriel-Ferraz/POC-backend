@@ -32,7 +32,7 @@ class LoginRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             if (!$this->email && !$this->cpf) {
-                $validator->errors()->add('email', 'CPF ou Email é obrigatório');
+                $validator->errors()->add('cpf', 'CPF é obrigatório');
             }
         });
     }

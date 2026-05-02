@@ -4,6 +4,7 @@ use App\Http\Controllers\{
     AnexoController,
     ChamadoController,
     FornecedorController,
+    GestorController,
     OrcamentarioController,
     PrestacaoContasController,
     SolicitacaoPagamentoController,
@@ -65,6 +66,13 @@ Route::middleware('auth:sanctum')
                 Route::post('/{anexoId}/recusar', [AnexoController::class, 'recusar']);
                 Route::delete('/{anexoId}', [AnexoController::class, 'destroy']);
                 Route::get('/{anexoId}/download', [AnexoController::class, 'download']);
+            });
+
+        // Gestor - Aprovação de Anexos
+        Route::prefix('gestor')
+            ->group(function () {
+                Route::get('/solicitacoes-pendentes', [GestorController::class, 'solicitacoesPendentes']);
+                Route::get('/solicitacoes/{id}', [GestorController::class, 'solicitacaoDetalhe']);
             });
 
         // Suporte ao Usuário

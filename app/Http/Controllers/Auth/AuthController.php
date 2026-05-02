@@ -29,14 +29,25 @@ class AuthController extends Controller
             ->orWhere('cpf', $identifier)
             ->first();
 
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            $this->writeWarning('Login failed: invalid credentials', ['identifier' => $identifier]);
+        // CPF não encontrado
+        if (!$user) {
+            $this->writeWarning('Login failed: user not found', ['identifier' => $identifier]);
 
             return response()->json([
-                'message' => 'CPF/Email ou senha inválidos',
+                'message' => 'CPF não encontrado',
             ], Response::HTTP_UNAUTHORIZED);
         }
 
+        // Senha incorreta
+        if (!Hash::check($request->password, $user->password)) {
+            $this->writeWarning('Login failed: wrong password', ['identifier' => $identifier]);
+
+            return response()->json([
+                'message' => 'Senha incorreta',
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Usuário inativo
         if (!$user->is_active) {
             $this->writeWarning('Login failed: inactive user', ['identifier' => $identifier]);
 

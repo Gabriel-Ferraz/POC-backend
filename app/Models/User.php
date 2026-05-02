@@ -111,6 +111,6 @@ class User extends Authenticatable
 
     public function chamados()
     {
-        return $this->hasMany(Chamado::class);
+        return $this->hasMany(Chamado::class, 'usuario_id');
     }
 }

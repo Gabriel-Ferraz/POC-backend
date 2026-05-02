@@ -65,11 +65,19 @@ class SolicitacaoPagamento extends Model
         return $this->hasMany(TramiteSolicitacao::class, 'solicitacao_id');
     }
 
-    public function registrarTramite(string $fase, ?int $usuarioId = null, ?string $observacao = null, ?string $motivo = null): void
-    {
+    public function registrarTramite(
+        string $fase,
+        ?int $usuarioId = null,
+        ?string $origem = null,
+        ?string $destino = null,
+        ?string $observacao = null,
+        ?string $motivo = null
+    ): void {
         $this->tramites()->create([
             'fase' => $fase,
             'usuario_id' => $usuarioId,
+            'origem' => $origem,
+            'destino' => $destino,
             'observacao' => $observacao,
             'motivo' => $motivo,
         ]);

@@ -109,8 +109,10 @@ class SolicitacaoPagamentoController extends Controller
             $empenho->bloquearSaldo($request->valor);
 
             $solicitacao->registrarTramite(
-                'Solicitação Criada',
+                'Solicitação de Pagamento',
                 $request->user()->id,
+                null,
+                'Anexar Documentos',
                 'Solicitação de pagamento criada pelo fornecedor'
             );
 
@@ -156,6 +158,7 @@ class SolicitacaoPagamentoController extends Controller
             'empenho.contrato.fornecedor',
             'solicitante',
             'anexos.aprovador',
+            'anexos.enviadoPor',
             'tramites.usuario',
         ])->findOrFail($id);
 
@@ -219,8 +222,10 @@ class SolicitacaoPagamentoController extends Controller
                             'id' => $tramite->usuario->id,
                             'name' => $tramite->usuario->name,
                         ] : null,
-                        'observacao' => $tramite->observacao,
+                        'origem' => $tramite->origem,
+                        'destino' => $tramite->destino,
                         'motivo' => $tramite->motivo,
+                        'observacao' => $tramite->observacao,
                     ];
                 }),
 
@@ -236,6 +241,8 @@ class SolicitacaoPagamentoController extends Controller
                         'data_envio' => $anexo->data_envio?->format('d/m/Y'),
                         'avaliado_por' => $anexo->aprovador?->name,
                         'motivo_recusa' => $anexo->motivo_recusa,
+                        'enviado_por' => $anexo->enviadoPor?->name,
+                        'enviado_em' => $anexo->enviado_em?->format('d/m/Y H:i'),
                     ];
                 }),
 
@@ -312,8 +319,10 @@ class SolicitacaoPagamentoController extends Controller
             $solicitacao->registrarTramite(
                 'Cancelamento',
                 $request->user()->id,
-                $request->motivo,
-                null
+                $solicitacao->status, // De qual status estava
+                'Cancelada',
+                'Solicitação cancelada pelo responsável técnico',
+                $request->motivo
             );
 
             DB::commit();
@@ -349,8 +358,10 @@ class SolicitacaoPagamentoController extends Controller
                     'id' => $tramite->id,
                     'fase' => $tramite->fase,
                     'usuario' => $tramite->usuario?->name,
-                    'observacao' => $tramite->observacao,
+                    'origem' => $tramite->origem,
+                    'destino' => $tramite->destino,
                     'motivo' => $tramite->motivo,
+                    'observacao' => $tramite->observacao,
                     'data' => $tramite->created_at->format('d/m/Y H:i:s'),
                 ];
             }),

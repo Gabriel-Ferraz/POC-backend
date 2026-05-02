@@ -15,8 +15,12 @@ class AnexoChamado extends Model
     protected $fillable = [
         'chamado_id',
         'mensagem_id',
-        'arquivo',
         'nome_original',
+        'nome_salvo',
+        'caminho',
+        'tamanho',
+        'tipo',
+        'enviado_por_usuario_id',
     ];
 
     public function chamado(): BelongsTo
@@ -27,5 +31,10 @@ class AnexoChamado extends Model
     public function mensagem(): BelongsTo
     {
         return $this->belongsTo(MensagemChamado::class);
+    }
+
+    public function enviadoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'enviado_por_usuario_id');
     }
 }

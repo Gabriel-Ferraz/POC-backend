@@ -125,14 +125,18 @@ class POCDemoSeeder extends Seeder
         ]);
 
         $solicitacao1->registrarTramite(
-            'Solicitação Criada',
+            'Solicitação de Pagamento',
             $responsavelTecnico->id,
+            null,
+            'Anexar Documentos',
             'Solicitação de pagamento criada'
         );
 
         $solicitacao1->registrarTramite(
             'Anexos Enviados para Aprovação',
             $responsavelTecnico->id,
+            'Anexar Documentos',
+            'Fiscal',
             'Todos os anexos foram enviados'
         );
 
@@ -153,6 +157,8 @@ class POCDemoSeeder extends Seeder
                 'arquivo_nome' => $tipo . '.pdf',
                 'status' => $status,
                 'data_envio' => '2024-01-25',
+                'enviado_por_usuario_id' => $responsavelTecnico->id,
+                'enviado_em' => '2024-01-25 09:30:00',
             ]);
         }
 
@@ -176,9 +182,77 @@ class POCDemoSeeder extends Seeder
             'paga_em' => '2023-12-28 14:30:00',
         ]);
 
-        $solicitacao2->registrarTramite('Solicitação Criada', $responsavelTecnico->id);
-        $solicitacao2->registrarTramite('Anexos Aprovados', $gestorContrato->id);
-        $solicitacao2->registrarTramite('Pagamento Realizado', $operadorPmsjp->id);
+        $solicitacao2->registrarTramite(
+            'Solicitação de Pagamento',
+            $responsavelTecnico->id,
+            null,
+            'Anexar Documentos',
+            'Solicitação de pagamento criada'
+        );
+        $solicitacao2->registrarTramite(
+            'Anexos Aprovados',
+            $gestorContrato->id,
+            'Fiscal',
+            'Gestor',
+            'Todos os anexos foram aprovados'
+        );
+        $solicitacao2->registrarTramite(
+            'Gestor',
+            $gestorContrato->id,
+            'Gestor',
+            'Comissão de Liquidação',
+            'Aprovado pelo gestor do contrato'
+        );
+        $solicitacao2->registrarTramite(
+            'Comissão de Liquidação',
+            $operadorPmsjp->id,
+            'Comissão de Liquidação',
+            'Secretário',
+            'Liquidação aprovada'
+        );
+        $solicitacao2->registrarTramite(
+            'Secretário',
+            $operadorPmsjp->id,
+            'Secretário',
+            'ISS',
+            'Secretário aprovou'
+        );
+        $solicitacao2->registrarTramite(
+            'ISS',
+            $operadorPmsjp->id,
+            'ISS',
+            'Ordem de Pagamento',
+            'ISS emitido'
+        );
+        $solicitacao2->registrarTramite(
+            'Ordem de Pagamento',
+            $operadorPmsjp->id,
+            'Ordem de Pagamento',
+            'Borderô',
+            'Ordem de pagamento emitida'
+        );
+        $solicitacao2->registrarTramite(
+            'Borderô',
+            $operadorPmsjp->id,
+            'Borderô',
+            'Remessa',
+            'Borderô cadastrado'
+        );
+        $solicitacao2->registrarTramite(
+            'Remessa',
+            $operadorPmsjp->id,
+            'Remessa',
+            'Pagamento',
+            'Remessa cadastrada'
+        );
+        $solicitacao2->registrarTramite(
+            'Pagamento',
+            $operadorPmsjp->id,
+            'Pagamento',
+            'Pagamento Realizado',
+            'Pagamento realizado via transferência bancária',
+            'Pagamento Realizado Bco: 406 Ag: 406 Conta: 123-4'
+        );
 
         // Terceira solicitação (cancelada)
         $solicitacao3 = SolicitacaoPagamento::create([
@@ -199,11 +273,19 @@ class POCDemoSeeder extends Seeder
             'motivo_cancelamento' => 'Documento fiscal com dados incorretos. Nova solicitação será criada.',
         ]);
 
-        $solicitacao3->registrarTramite('Solicitação Criada', $responsavelTecnico->id);
         $solicitacao3->registrarTramite(
-            'Solicitação Cancelada',
+            'Solicitação de Pagamento',
             $responsavelTecnico->id,
             null,
+            'Anexar Documentos',
+            'Solicitação de pagamento criada'
+        );
+        $solicitacao3->registrarTramite(
+            'Cancelamento',
+            $responsavelTecnico->id,
+            'Anexar Documentos',
+            'Cancelada',
+            'Solicitação cancelada pelo responsável técnico',
             'Documento fiscal com dados incorretos'
         );
 

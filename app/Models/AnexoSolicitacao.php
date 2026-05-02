@@ -22,11 +22,14 @@ class AnexoSolicitacao extends Model
         'motivo_recusa',
         'aprovado_por',
         'data_aprovacao',
+        'enviado_por_usuario_id',
+        'enviado_em',
     ];
 
     protected $casts = [
         'data_envio' => 'date',
         'data_aprovacao' => 'datetime',
+        'enviado_em' => 'datetime',
     ];
 
     public function solicitacao(): BelongsTo
@@ -37,6 +40,11 @@ class AnexoSolicitacao extends Model
     public function aprovador(): BelongsTo
     {
         return $this->belongsTo(User::class, 'aprovado_por');
+    }
+
+    public function enviadoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'enviado_por_usuario_id');
     }
 
     public function getTipoAnexoLabelAttribute(): string

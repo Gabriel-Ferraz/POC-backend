@@ -18,7 +18,7 @@ class AnexoController extends Controller
      */
     public function index(Request $request, int $solicitacaoId): JsonResponse
     {
-        $solicitacao = SolicitacaoPagamento::with('anexos.aprovador')->findOrFail($solicitacaoId);
+        $solicitacao = SolicitacaoPagamento::with(['anexos.aprovador', 'anexos.enviadoPor'])->findOrFail($solicitacaoId);
 
         // Verificar se o documento fiscal foi recusado
         $documentoFiscalRecusado = $solicitacao->anexos
@@ -59,8 +59,10 @@ class AnexoController extends Controller
                         'data_envio' => $anexo->data_envio?->format('Y-m-d'),
                         'motivo_recusa' => $anexo->motivo_recusa,
                         'is_documento_fiscal' => $isDocumentoFiscal,
-                        'pode_reenviar' => $podeReenviar, // FLAG INDIVIDUAL
-                        'pode_remover' => $podeReenviar && $anexo->arquivo_path !== null, // Só pode remover se pode reenviar e tem arquivo
+                        'pode_reenviar' => $podeReenviar,
+                        'pode_remover' => $podeReenviar && $anexo->arquivo_path !== null,
+                        'enviado_por' => $anexo->enviadoPor?->name,
+                        'enviado_em' => $anexo->enviado_em?->format('d/m/Y H:i'),
                     ];
                 })->values(),
             ],
@@ -117,6 +119,8 @@ class AnexoController extends Controller
                 'status' => 'anexo_cadastrado',
                 'data_envio' => now()->format('Y-m-d'),
                 'motivo_recusa' => null,
+                'enviado_por_usuario_id' => $request->user()->id,
+                'enviado_em' => now(),
             ]);
 
             return response()->json([
@@ -272,6 +276,8 @@ class AnexoController extends Controller
                 $solicitacao->registrarTramite(
                     'Anexos Enviados para Aprovação',
                     $request->user()->id,
+                    'Anexar Documentos',
+                    'Fiscal',
                     $mensagem
                 );
             }
@@ -334,6 +340,8 @@ class AnexoController extends Controller
                 $anexo->solicitacao->registrarTramite(
                     'Todos Anexos Aprovados',
                     $request->user()->id,
+                    'Fiscal',
+                    'Gestor',
                     'Todos os anexos foram aprovados. Solicitação prossegue no fluxo interno da PMSJP'
                 );
             }
@@ -409,6 +417,8 @@ class AnexoController extends Controller
             $anexo->solicitacao->registrarTramite(
                 'Anexo Recusado',
                 $request->user()->id,
+                'Fiscal',
+                'Anexar Documentos',
                 $mensagem,
                 $request->motivo
             );

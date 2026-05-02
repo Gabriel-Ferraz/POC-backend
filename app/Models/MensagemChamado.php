@@ -15,6 +15,7 @@ class MensagemChamado extends Model
     protected $fillable = [
         'chamado_id',
         'usuario_id',
+        'tipo',
         'mensagem',
     ];
 
@@ -26,5 +27,10 @@ class MensagemChamado extends Model
     public function usuario(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function anexos()
+    {
+        return $this->hasMany(AnexoChamado::class, 'mensagem_id');
     }
 }

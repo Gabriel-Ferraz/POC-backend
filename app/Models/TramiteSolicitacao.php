@@ -15,6 +15,8 @@ class TramiteSolicitacao extends Model
     protected $fillable = [
         'solicitacao_id',
         'fase',
+        'origem',
+        'destino',
         'usuario_id',
         'observacao',
         'motivo',

@@ -15,15 +15,14 @@ class Chamado extends Model
         'usuario_id',
         'modulo',
         'assunto',
-        'mensagem',
         'status',
-        'respondido_em',
-        'concluido_em',
+        'data_ultima_resposta',
+        'data_conclusao',
     ];
 
     protected $casts = [
-        'respondido_em' => 'datetime',
-        'concluido_em' => 'datetime',
+        'data_ultima_resposta' => 'datetime',
+        'data_conclusao' => 'datetime',
     ];
 
     public function usuario(): BelongsTo

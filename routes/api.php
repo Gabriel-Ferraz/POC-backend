@@ -80,6 +80,8 @@ Route::middleware('auth:sanctum')
         Route::prefix('chamados')
             ->group(function () {
                 Route::get('/', [ChamadoController::class, 'index']);
+                Route::get('/usuarios', [ChamadoController::class, 'listarUsuarios']);
+                Route::get('/anexos/{id}/download', [ChamadoController::class, 'downloadAnexo']);
                 Route::post('/', [ChamadoController::class, 'store']);
                 Route::get('/{id}', [ChamadoController::class, 'show']);
                 Route::post('/{id}/responder', [ChamadoController::class, 'responder']);

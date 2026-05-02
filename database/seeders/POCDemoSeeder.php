@@ -293,29 +293,45 @@ class POCDemoSeeder extends Seeder
         $chamado1 = Chamado::create([
             'usuario_id' => $responsavelTecnico->id,
             'modulo' => 'Portal do Fornecedor',
-            'assunto' => 'Dúvida sobre anexação de documentos',
-            'mensagem' => 'Gostaria de saber quais formatos de arquivo são aceitos para os anexos de solicitação de pagamento.',
+            'assunto' => 'Dúvida sobre anexação de documentos - Gostaria de saber quais formatos de arquivo são aceitos para os anexos de solicitação de pagamento.',
             'status' => 'concluido',
-            'respondido_em' => now()->subDays(2),
-            'concluido_em' => now()->subDays(1),
+            'data_ultima_resposta' => now()->subDays(2),
+            'data_conclusao' => now()->subDays(1),
         ]);
 
+        // Mensagem de abertura
+        $chamado1->mensagens()->create([
+            'usuario_id' => $responsavelTecnico->id,
+            'tipo' => 'abertura',
+            'mensagem' => 'Dúvida sobre anexação de documentos - Gostaria de saber quais formatos de arquivo são aceitos para os anexos de solicitação de pagamento.',
+        ]);
+
+        // Resposta do gestor
         $chamado1->mensagens()->create([
             'usuario_id' => $gestorSuporte->id,
+            'tipo' => 'resposta',
             'mensagem' => 'Os formatos aceitos são: PDF, JPG, JPEG e PNG. O tamanho máximo por arquivo é de 10MB.',
         ]);
 
         $chamado2 = Chamado::create([
             'usuario_id' => $responsavelTecnico->id,
             'modulo' => 'Solicitação de Pagamento',
-            'assunto' => 'Erro ao enviar anexo',
-            'mensagem' => 'Estou tentando enviar o anexo da certidão negativa mas o sistema retorna erro.',
+            'assunto' => 'Erro ao enviar anexo - Estou tentando enviar o anexo da certidão negativa mas o sistema retorna erro.',
             'status' => 'em_atendimento',
-            'respondido_em' => now()->subHours(3),
+            'data_ultima_resposta' => now()->subHours(3),
         ]);
 
+        // Mensagem de abertura
+        $chamado2->mensagens()->create([
+            'usuario_id' => $responsavelTecnico->id,
+            'tipo' => 'abertura',
+            'mensagem' => 'Erro ao enviar anexo - Estou tentando enviar o anexo da certidão negativa mas o sistema retorna erro.',
+        ]);
+
+        // Resposta do gestor
         $chamado2->mensagens()->create([
             'usuario_id' => $gestorSuporte->id,
+            'tipo' => 'resposta',
             'mensagem' => 'Pode me informar qual mensagem de erro aparece? E qual o tamanho do arquivo?',
         ]);
 

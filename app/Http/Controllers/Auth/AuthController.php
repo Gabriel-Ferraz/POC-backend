@@ -18,27 +18,30 @@ class AuthController extends Controller
     use Logger;
 
     /**
-     * Authenticate user and return token.
+     * Authenticate user and return token (login by CPF or email).
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        $this->writeInfo('Login attempt', ['email' => $request->email]);
+        $identifier = $request->email ?? $request->cpf;
+        $this->writeInfo('Login attempt', ['identifier' => $identifier]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('email', $identifier)
+            ->orWhere('cpf', $identifier)
+            ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            $this->writeWarning('Login failed: invalid credentials', ['email' => $request->email]);
+            $this->writeWarning('Login failed: invalid credentials', ['identifier' => $identifier]);
 
             return response()->json([
-                'message' => 'Invalid credentials',
+                'message' => 'CPF/Email ou senha inválidos',
             ], Response::HTTP_UNAUTHORIZED);
         }
 
         if (!$user->is_active) {
-            $this->writeWarning('Login failed: inactive user', ['email' => $request->email]);
+            $this->writeWarning('Login failed: inactive user', ['identifier' => $identifier]);
 
             return response()->json([
-                'message' => 'User account is disabled',
+                'message' => 'Usuário inativo',
             ], Response::HTTP_FORBIDDEN);
         }
 
@@ -51,6 +54,7 @@ class AuthController extends Controller
 
         return response()->json([
             'token' => $token,
+            'user' => new UserResource($user->load('fornecedor')),
         ]);
     }
 
@@ -68,11 +72,11 @@ class AuthController extends Controller
     }
 
     /**
-     * Return authenticated user data with roles and permissions.
+     * Return authenticated user data with fornecedor.
      */
     public function me(Request $request): JsonResponse
     {
-        $user = $request->user()->load('roles', 'permissions');
+        $user = $request->user()->load('fornecedor');
 
         return response()->json([
             'user' => new UserResource($user),

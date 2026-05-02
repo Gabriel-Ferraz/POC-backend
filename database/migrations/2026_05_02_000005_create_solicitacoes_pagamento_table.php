@@ -24,7 +24,7 @@ return new class extends Migration
             $table->text('observacao_documento')->nullable();
 
             // Forma de pagamento
-            $table->enum('forma_pagamento', ['conta_bancaria', 'documento_fatura'])->default('conta_bancaria');
+            $table->enum('forma_pagamento', ['conta_bancaria', 'documento'])->default('conta_bancaria');
             $table->string('banco')->nullable();
             $table->string('agencia')->nullable();
             $table->string('digito_agencia')->nullable();
@@ -32,6 +32,7 @@ return new class extends Migration
             $table->string('digito_conta')->nullable();
             $table->string('operacao')->nullable();
             $table->string('cidade_banco')->nullable();
+            $table->text('observacao_pagamento')->nullable();
 
             $table->enum('status', [
                 'pendente',

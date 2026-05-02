@@ -40,21 +40,28 @@ class SolicitacaoPagamentoController extends Controller
     public function store(Request $request, int $empenhoId): JsonResponse
     {
         $validator = Validator::make($request->all(), [
+            // Bloco 1: Valor
             'valor' => 'required|numeric|min:0.01',
-            'observacao' => 'nullable|string',
+
+            // Bloco 2: Documento Fiscal
             'tipo_documento' => 'required|string',
             'numero_documento' => 'required|string',
             'serie' => 'nullable|string',
             'data_emissao_documento' => 'required|date',
             'observacao_documento' => 'nullable|string',
-            'forma_pagamento' => 'required|in:conta_bancaria,documento_fatura',
-            'banco' => 'required_if:forma_pagamento,conta_bancaria',
-            'agencia' => 'required_if:forma_pagamento,conta_bancaria',
+
+            // Bloco 3: Forma de Pagamento
+            'forma_pagamento' => 'required|in:conta_bancaria,documento',
+            'banco' => 'required_if:forma_pagamento,conta_bancaria|nullable|string',
+            'agencia' => 'required_if:forma_pagamento,conta_bancaria|nullable|string',
             'digito_agencia' => 'nullable|string',
-            'conta' => 'required_if:forma_pagamento,conta_bancaria',
+            'conta' => 'required_if:forma_pagamento,conta_bancaria|nullable|string',
             'digito_conta' => 'nullable|string',
             'operacao' => 'nullable|string',
             'cidade_banco' => 'nullable|string',
+
+            // Bloco 4: Observação do Pagamento
+            'observacao_pagamento' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -82,7 +89,6 @@ class SolicitacaoPagamentoController extends Controller
                 'empenho_id' => $empenhoId,
                 'solicitante_id' => $request->user()->id,
                 'valor' => $request->valor,
-                'observacao' => $request->observacao,
                 'tipo_documento' => $request->tipo_documento,
                 'numero_documento' => $request->numero_documento,
                 'serie' => $request->serie,
@@ -96,6 +102,7 @@ class SolicitacaoPagamentoController extends Controller
                 'digito_conta' => $request->digito_conta,
                 'operacao' => $request->operacao,
                 'cidade_banco' => $request->cidade_banco,
+                'observacao_pagamento' => $request->observacao_pagamento,
                 'status' => 'pendente',
             ]);
 
@@ -178,6 +185,7 @@ class SolicitacaoPagamentoController extends Controller
                     'conta' => $solicitacao->conta . ($solicitacao->digito_conta ? '-' . $solicitacao->digito_conta : ''),
                     'operacao' => $solicitacao->operacao,
                     'cidade' => $solicitacao->cidade_banco,
+                    'observacao_pagamento' => $solicitacao->observacao_pagamento,
                 ],
                 'cancelamento' => $solicitacao->cancelada_em ? [
                     'data' => $solicitacao->cancelada_em->format('d/m/Y H:i'),

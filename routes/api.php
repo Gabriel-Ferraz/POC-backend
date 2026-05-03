@@ -134,6 +134,9 @@ Route::middleware('auth:sanctum')
                 // Criar empenho
                 Route::post('/empenhos', [AdminController::class, 'criarEmpenho']);
 
+                // Listar status disponíveis
+                Route::get('/status', [AdminController::class, 'listarStatus']);
+
                 // Atualizar status de solicitação
                 Route::post('/solicitacoes/{id}/status', [AdminController::class, 'atualizarStatusSolicitacao']);
             });

@@ -194,20 +194,56 @@ public function __construct()
 
 ---
 
-### 4. Atualizar Status de Solicitação
+### 4. Listar Status Disponíveis
+**GET** `/api/admin/status`
+
+#### Response (200 OK)
+```json
+{
+  "status": [
+    {"value": "rascunho", "label": "Rascunho", "color": "gray"},
+    {"value": "aguardando_aprovacao", "label": "Aguardando Aprovação", "color": "yellow"},
+    {"value": "anexos", "label": "Análise de Anexos", "color": "blue"},
+    {"value": "fiscal", "label": "Análise Fiscal", "color": "indigo"},
+    {"value": "gestor", "label": "Aprovação do Gestor", "color": "purple"},
+    {"value": "liquidacao", "label": "Liquidação", "color": "pink"},
+    {"value": "secretario", "label": "Aprovação do Secretário", "color": "violet"},
+    {"value": "iss", "label": "Verificação ISS", "color": "cyan"},
+    {"value": "ordem_pagamento", "label": "Ordem de Pagamento", "color": "teal"},
+    {"value": "autorizacao", "label": "Autorização", "color": "emerald"},
+    {"value": "bordero", "label": "Borderô", "color": "lime"},
+    {"value": "remessa", "label": "Remessa Bancária", "color": "amber"},
+    {"value": "pagamento", "label": "Em Pagamento", "color": "orange"},
+    {"value": "pagamento_realizado", "label": "Pagamento Realizado", "color": "green"},
+    {"value": "cancelado", "label": "Cancelado", "color": "red"}
+  ]
+}
+```
+
+**Uso:** Dropdown no frontend para selecionar status ao atualizar solicitação
+
+**Status:** ✅ Implementado
+
+---
+
+### 5. Atualizar Status de Solicitação
 **POST** `/api/admin/solicitacoes/{id}/status`
 
 #### Request Body
 ```json
 {
-  "status": "aprovado",
-  "motivo": "Aprovado manualmente pelo administrador"
+  "status": "fiscal",
+  "motivo": "Movido para análise fiscal manualmente"
 }
 ```
 
 #### Validações
-- `status`: obrigatório, enum (rascunho, aguardando_aprovacao_anexos, em_analise_fiscal, aprovado, em_pagamento, pagamento_realizado, cancelada)
-- `motivo`: opcional, string
+- `status`: obrigatório, enum (rascunho, aguardando_aprovacao, anexos, fiscal, gestor, liquidacao, secretario, iss, ordem_pagamento, autorizacao, bordero, remessa, pagamento, pagamento_realizado, cancelado)
+- `motivo`: opcional, string (max 500 caracteres)
+
+#### Regras de Validação Especiais
+- ❌ **Não pode alterar** solicitação com `status = 'pagamento_realizado'`
+- ⚠️ Solicitação `cancelado` **só pode voltar** para `rascunho`
 
 #### Response (200 OK)
 ```json
@@ -215,23 +251,26 @@ public function __construct()
   "message": "Status atualizado com sucesso",
   "solicitacao": {
     "id": 1,
-    "numero": "SOL-2026-001",
-    "status_anterior": "em_analise_fiscal",
-    "status_atual": "aprovado"
+    "numero": "SP-2024-000001",
+    "status_anterior": "aguardando_aprovacao",
+    "status_atual": "fiscal",
+    "atualizado_em": "03/05/2026 03:30:15"
   }
 }
 ```
 
 **Lógica:**
+- Usa transação DB para garantir consistência
 - Atualiza o status da solicitação
-- Registra no trâmite usando o método `registrarTramite()`
-- Inclui motivo ou mensagem padrão "Alteração manual pelo administrador"
+- Registra no trâmite com label amigável
+- Inclui motivo customizado ou mensagem padrão com nome do admin
+- Valida regras de negócio (não alterar pago, cancelado só volta para rascunho)
 
 **Status:** ✅ Implementado
 
 ---
 
-### 5. Listar Fornecedores
+### 6. Listar Fornecedores
 **GET** `/api/admin/fornecedores`
 
 #### Response (200 OK)

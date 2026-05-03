@@ -264,42 +264,137 @@ class AdminController extends Controller
         }
 
         $validated = $request->validate([
-            'status' => 'required|in:pendente,aguardando_aprovacao_anexos,anexos_recusados,aguardando_autorizacao_gestor,em_liquidacao,em_ordem_pagamento,pagamento_em_remessa,pagamento_realizado,cancelada',
-            'motivo' => 'nullable|string',
+            'status' => 'required|in:rascunho,aguardando_aprovacao,anexos,fiscal,gestor,liquidacao,secretario,iss,ordem_pagamento,autorizacao,bordero,remessa,pagamento,pagamento_realizado,cancelado',
+            'motivo' => 'nullable|string|max:500',
         ]);
 
-        $solicitacao = SolicitacaoPagamento::findOrFail($id);
-        $statusAnterior = $solicitacao->status;
+        DB::beginTransaction();
 
-        $solicitacao->update([
-            'status' => $validated['status'],
-        ]);
+        try {
+            $solicitacao = SolicitacaoPagamento::findOrFail($id);
+            $statusAnterior = $solicitacao->status;
+            $user = Auth::user();
 
-        // Registrar no trâmite
-        $solicitacao->registrarTramite(
-            "Status alterado manualmente",
-            Auth::id(),
-            $statusAnterior,
-            $validated['status'],
-            $validated['motivo'] ?? 'Alteração manual pelo administrador'
-        );
+            // Validar se pode alterar status
+            if ($statusAnterior === 'pagamento_realizado') {
+                return response()->json([
+                    'message' => 'Não é possível alterar status de solicitação já paga',
+                ], 422);
+            }
 
-        \Log::info('AdminController::atualizarStatusSolicitacao', [
-            'admin_id' => Auth::id(),
-            'solicitacao_id' => $solicitacao->id,
-            'status_anterior' => $statusAnterior,
-            'status_novo' => $validated['status'],
-        ]);
+            if ($statusAnterior === 'cancelado' && $validated['status'] !== 'rascunho') {
+                return response()->json([
+                    'message' => 'Solicitação cancelada só pode voltar para rascunho',
+                ], 422);
+            }
 
-        return response()->json([
-            'message' => 'Status atualizado com sucesso',
-            'solicitacao' => [
-                'id' => $solicitacao->id,
-                'numero' => $solicitacao->numero,
+            // Atualizar status
+            $solicitacao->update([
+                'status' => $validated['status'],
+            ]);
+
+            // Registrar no trâmite
+            $observacao = $validated['motivo']
+                ? $validated['motivo']
+                : "Alteração manual pelo administrador ({$user->name})";
+
+            $solicitacao->registrarTramite(
+                $this->getStatusLabel($validated['status']),
+                Auth::id(),
+                $statusAnterior,
+                $validated['status'],
+                $observacao
+            );
+
+            DB::commit();
+
+            \Log::info('AdminController::atualizarStatusSolicitacao', [
+                'admin_id' => Auth::id(),
+                'solicitacao_id' => $solicitacao->id,
                 'status_anterior' => $statusAnterior,
-                'status_atual' => $solicitacao->status,
-            ],
-        ]);
+                'status_novo' => $validated['status'],
+            ]);
+
+            return response()->json([
+                'message' => 'Status atualizado com sucesso',
+                'solicitacao' => [
+                    'id' => $solicitacao->id,
+                    'numero' => $solicitacao->numero,
+                    'status_anterior' => $statusAnterior,
+                    'status_atual' => $solicitacao->status,
+                    'atualizado_em' => now()->format('d/m/Y H:i:s'),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            \Log::error('AdminController::atualizarStatusSolicitacao exception', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+
+            return response()->json([
+                'message' => 'Erro ao atualizar status',
+                'error' => config('app.debug') ? $e->getMessage() : null,
+            ], 500);
+        }
+    }
+
+    /**
+     * Retornar label do status
+     */
+    private function getStatusLabel(string $status): string
+    {
+        $labels = [
+            'rascunho' => 'Rascunho',
+            'aguardando_aprovacao' => 'Aguardando Aprovação',
+            'anexos' => 'Análise de Anexos',
+            'fiscal' => 'Análise Fiscal',
+            'gestor' => 'Aprovação do Gestor',
+            'liquidacao' => 'Liquidação',
+            'secretario' => 'Aprovação do Secretário',
+            'iss' => 'Verificação ISS',
+            'ordem_pagamento' => 'Ordem de Pagamento',
+            'autorizacao' => 'Autorização',
+            'bordero' => 'Borderô',
+            'remessa' => 'Remessa Bancária',
+            'pagamento' => 'Em Pagamento',
+            'pagamento_realizado' => 'Pagamento Realizado',
+            'cancelado' => 'Cancelado',
+        ];
+
+        return $labels[$status] ?? $status;
+    }
+
+    /**
+     * Listar todos os status disponíveis
+     */
+    public function listarStatus(): JsonResponse
+    {
+        if ($erro = $this->verificarPermissaoAdmin()) {
+            return $erro;
+        }
+
+        $status = [
+            ['value' => 'rascunho', 'label' => 'Rascunho', 'color' => 'gray'],
+            ['value' => 'aguardando_aprovacao', 'label' => 'Aguardando Aprovação', 'color' => 'yellow'],
+            ['value' => 'anexos', 'label' => 'Análise de Anexos', 'color' => 'blue'],
+            ['value' => 'fiscal', 'label' => 'Análise Fiscal', 'color' => 'indigo'],
+            ['value' => 'gestor', 'label' => 'Aprovação do Gestor', 'color' => 'purple'],
+            ['value' => 'liquidacao', 'label' => 'Liquidação', 'color' => 'pink'],
+            ['value' => 'secretario', 'label' => 'Aprovação do Secretário', 'color' => 'violet'],
+            ['value' => 'iss', 'label' => 'Verificação ISS', 'color' => 'cyan'],
+            ['value' => 'ordem_pagamento', 'label' => 'Ordem de Pagamento', 'color' => 'teal'],
+            ['value' => 'autorizacao', 'label' => 'Autorização', 'color' => 'emerald'],
+            ['value' => 'bordero', 'label' => 'Borderô', 'color' => 'lime'],
+            ['value' => 'remessa', 'label' => 'Remessa Bancária', 'color' => 'amber'],
+            ['value' => 'pagamento', 'label' => 'Em Pagamento', 'color' => 'orange'],
+            ['value' => 'pagamento_realizado', 'label' => 'Pagamento Realizado', 'color' => 'green'],
+            ['value' => 'cancelado', 'label' => 'Cancelado', 'color' => 'red'],
+        ];
+
+        return response()->json(['status' => $status]);
     }
 
     /**

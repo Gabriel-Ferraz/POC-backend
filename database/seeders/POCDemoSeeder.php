@@ -121,7 +121,7 @@ class POCDemoSeeder extends Seeder
             'digito_conta' => '1',
             'operacao' => '001',
             'cidade_banco' => 'São José dos Pinhais',
-            'status' => 'aguardando_aprovacao_anexos',
+            'status' => 'aguardando_aprovacao',
         ]);
 
         $solicitacao1->registrarTramite(
@@ -268,7 +268,7 @@ class POCDemoSeeder extends Seeder
             'agencia' => '9876',
             'conta' => '123456',
             'digito_conta' => '7',
-            'status' => 'cancelada',
+            'status' => 'cancelado',
             'cancelada_em' => '2024-02-15 10:20:00',
             'motivo_cancelamento' => 'Documento fiscal com dados incorretos. Nova solicitação será criada.',
         ]);

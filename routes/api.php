@@ -94,9 +94,10 @@ Route::middleware('auth:sanctum')
         // Prestação de Contas
         Route::prefix('prestacao-contas')
             ->group(function () {
+                Route::get('/layouts', [PrestacaoContasController::class, 'listarLayouts']);
                 Route::post('/exportar', [PrestacaoContasController::class, 'exportar']);
-                Route::get('/exportacoes', [PrestacaoContasController::class, 'exportacoes']);
-                Route::get('/exportacoes/{id}/download', [PrestacaoContasController::class, 'download']);
+                Route::get('/exportacoes', [PrestacaoContasController::class, 'listarExportacoes']);
+                Route::post('/layouts/reordenar', [PrestacaoContasController::class, 'reordenarLayouts']);
             });
 
         // Orçamentário
@@ -135,10 +136,19 @@ Route::middleware('auth:sanctum')
                 // Criar empenho
                 Route::post('/empenhos', [AdminController::class, 'criarEmpenho']);
 
-                // Listar status disponíveis
+                // Listar status de empenhos
+                Route::get('/empenhos/status', [AdminController::class, 'listarStatusEmpenhos']);
+
+                // Listar status de solicitações
                 Route::get('/status', [AdminController::class, 'listarStatus']);
 
                 // Atualizar status de solicitação
                 Route::post('/solicitacoes/{id}/status', [AdminController::class, 'atualizarStatusSolicitacao']);
             });
     });
+
+// Downloads de prestação de contas (autenticação via token na query string)
+Route::prefix('prestacao-contas/exportacoes')->group(function () {
+    Route::get('/{id}/download', [PrestacaoContasController::class, 'downloadZip']);
+    Route::get('/{exportId}/arquivos/{arquivoId}/download', [PrestacaoContasController::class, 'downloadArquivo']);
+});

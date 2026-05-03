@@ -368,7 +368,25 @@ class AdminController extends Controller
     }
 
     /**
-     * Listar todos os status disponíveis
+     * Listar status de empenhos disponíveis
+     */
+    public function listarStatusEmpenhos(): JsonResponse
+    {
+        if ($erro = $this->verificarPermissaoAdmin()) {
+            return $erro;
+        }
+
+        $status = [
+            ['value' => 'disponivel', 'label' => 'Disponível'],
+            ['value' => 'bloqueado', 'label' => 'Bloqueado'],
+            ['value' => 'sem_saldo', 'label' => 'Sem Saldo'],
+        ];
+
+        return response()->json(['status' => $status]);
+    }
+
+    /**
+     * Listar todos os status de solicitações disponíveis
      */
     public function listarStatus(): JsonResponse
     {

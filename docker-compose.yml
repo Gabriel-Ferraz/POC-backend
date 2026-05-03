@@ -10,6 +10,18 @@ services:
       - "3333:3333"
     volumes:
       - .:/app
+    labels:
+      - "traefik.enable=true"
+
+      # rota /api → backend
+      - "traefik.http.routers.app.rule=PathPrefix(`/api`)"
+      - "traefik.http.routers.app.entrypoints=web"
+
+      # remove /api antes de enviar pro container
+      - "traefik.http.middlewares.app-strip.stripprefix.prefixes=/api"
+      - "traefik.http.routers.app.middlewares=app-strip"
+
+      - "traefik.http.services.app.loadbalancer.server.port=3333"
     environment:
       CACHE_STORE: redis
       QUEUE_CONNECTION: redis
@@ -69,6 +81,40 @@ services:
     image: redis:7-alpine
     volumes:
       - redis_data:/data
+    networks:
+      - network
+
+  tomcat:
+    image: tomcat:9-alpine
+    ports:
+      - "8180:8080"
+    networks:
+      - network
+
+  adminer:
+    image: adminer:latest
+    ports:
+      - "8181:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      - postgres
+    networks:
+      - network
+
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "8008:80"
+      - "8080:8080" # dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml
     networks:
       - network
 

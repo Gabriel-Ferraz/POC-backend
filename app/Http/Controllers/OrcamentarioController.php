@@ -161,9 +161,41 @@ class OrcamentarioController extends Controller
 
     public function indexAlteracoes(Request $request): JsonResponse
     {
-        $alteracoes = AlteracaoOrcamentaria::with(['leiAto', 'dotacoes'])
-            ->orderBy('data_ato', 'desc')
-            ->get();
+        $query = AlteracaoOrcamentaria::with(['leiAto', 'dotacoes']);
+
+        if ($request->filled('decreto')) {
+            $query->where('decreto_autorizador', 'ILIKE', '%' . $request->decreto . '%');
+        }
+
+        if ($request->filled('tipo_ato')) {
+            $query->where('tipo_ato', $request->tipo_ato);
+        }
+
+        if ($request->filled('tipo_credito')) {
+            $query->where('tipo_credito', $request->tipo_credito);
+        }
+
+        if ($request->filled('tipo_recurso')) {
+            $query->where('tipo_recurso', $request->tipo_recurso);
+        }
+
+        if ($request->filled('data_ato_de')) {
+            $query->whereDate('data_ato', '>=', $request->data_ato_de);
+        }
+
+        if ($request->filled('data_ato_ate')) {
+            $query->whereDate('data_ato', '<=', $request->data_ato_ate);
+        }
+
+        if ($request->filled('data_publicacao_de')) {
+            $query->whereDate('data_publicacao', '>=', $request->data_publicacao_de);
+        }
+
+        if ($request->filled('data_publicacao_ate')) {
+            $query->whereDate('data_publicacao', '<=', $request->data_publicacao_ate);
+        }
+
+        $alteracoes = $query->orderBy('data_ato', 'desc')->get();
 
         return response()->json([
             'alteracoes' => $alteracoes->map(function ($alt) {
@@ -191,7 +223,7 @@ class OrcamentarioController extends Controller
             'data_publicacao' => 'required|date',
             'tipo_ato' => 'required|in:decreto,resolucao,ato_gestor',
             'tipo_credito' => 'required|in:especial,suplementar,extraordinario',
-            'tipo_recurso' => 'required|in:superavit,excesso_arrecadacao',
+            'tipo_recurso' => 'required|in:superavit,excesso_arrecadacao,valor_credito',
             'valor_credito' => 'required|numeric|min:0.01',
         ]);
 

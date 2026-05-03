@@ -82,6 +82,7 @@ Route::middleware('auth:sanctum')
             ->group(function () {
                 Route::get('/', [ChamadoController::class, 'index']);
                 Route::get('/usuarios', [ChamadoController::class, 'listarUsuarios']);
+                Route::get('/responsaveis', [ChamadoController::class, 'listarResponsaveis']);
                 Route::get('/anexos/{id}/download', [ChamadoController::class, 'downloadAnexo']);
                 Route::post('/', [ChamadoController::class, 'store']);
                 Route::get('/{id}', [ChamadoController::class, 'show']);

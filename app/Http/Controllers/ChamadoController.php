@@ -74,6 +74,35 @@ class ChamadoController extends Controller
         }
     }
 
+    public function listarResponsaveis(Request $request): JsonResponse
+    {
+        // Responsável = qualquer usuário que enviou mensagem num chamado,
+        // exceto o próprio autor do chamado
+        $query = \App\Models\User::whereIn(
+                'id',
+                \App\Models\MensagemChamado::select('mensagens_chamado.usuario_id')
+                    ->join('chamados', 'chamados.id', '=', 'mensagens_chamado.chamado_id')
+                    ->whereColumn('mensagens_chamado.usuario_id', '!=', 'chamados.usuario_id')
+                    ->distinct()
+            )
+            ->select('id', 'name', 'perfil');
+
+        if ($request->filled('busca')) {
+            $query->where('name', 'ILIKE', '%'.$request->busca.'%');
+        }
+
+        $usuarios = $query->orderBy('name')->limit(20)->get();
+
+        return response()->json([
+            'usuarios' => $usuarios->map(fn ($u) => [
+                'id'          => $u->id,
+                'name'        => $u->name,
+                'perfil'      => $u->perfil,
+                'perfil_label' => $this->getPerfilLabel($u->perfil),
+            ])->values(),
+        ]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -132,6 +161,14 @@ class ChamadoController extends Controller
             });
         }
 
+        // Filtro por Responsável (qualquer usuário que respondeu, exceto o autor)
+        if ($request->filled('responsavel_id')) {
+            $query->whereHas('mensagens', function ($q) use ($request) {
+                $q->where('mensagens_chamado.usuario_id', $request->responsavel_id)
+                  ->whereColumn('mensagens_chamado.usuario_id', '!=', 'chamados.usuario_id');
+            });
+        }
+
         // Filtro por Assunto
         if ($request->filled('assunto')) {
             $query->where('assunto', 'like', '%' . $request->assunto . '%');
@@ -166,11 +203,19 @@ class ChamadoController extends Controller
                 $ultimaMensagemPor = null;
                 $temRespostaPendente = false;
 
+                $responsavel = null;
+                $responsavelId = null;
+
                 if ($ultimaMensagem) {
                     $perfisGestores = ['gestor_suporte', 'gestor_contrato'];
                     $mensagemDeGestor = in_array($ultimaMensagem->usuario->perfil, $perfisGestores);
 
                     $ultimaMensagemPor = $mensagemDeGestor ? 'gestor' : 'usuario';
+
+                    if ($mensagemDeGestor) {
+                        $responsavel = $ultimaMensagem->usuario->name;
+                        $responsavelId = $ultimaMensagem->usuario->id;
+                    }
 
                     // Se a última mensagem foi de um gestor e o chamado não está concluído
                     // e o usuário logado é o criador do chamado
@@ -188,6 +233,8 @@ class ChamadoController extends Controller
                     'assunto' => $chamado->assunto,
                     'usuario' => $chamado->usuario->name,
                     'usuario_id' => $chamado->usuario_id,
+                    'responsavel' => $responsavel,
+                    'responsavel_id' => $responsavelId,
                     'status' => $chamado->status,
                     'status_label' => $this->getStatusLabel($chamado->status),
                     'data_abertura' => $chamado->created_at->format('d/m/Y'),

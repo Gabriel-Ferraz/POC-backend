@@ -13,7 +13,7 @@ class SolicitacaoPagamentoController extends Controller
 {
     public function index(Request $request, int $empenhoId): JsonResponse
     {
-        $empenho = Empenho::with(['solicitacoes.solicitante'])->findOrFail($empenhoId);
+        $empenho = Empenho::with(['contrato', 'solicitacoes.solicitante'])->findOrFail($empenhoId);
 
         $solicitacoes = $empenho->solicitacoes->map(function ($sol) {
             return [
@@ -23,7 +23,8 @@ class SolicitacaoPagamentoController extends Controller
                 'valor' => $sol->valor,
                 'solicitante' => $sol->solicitante->name,
                 'status' => $sol->status,
-                'documento_fiscal' => $sol->tipo_documento . ' ' . $sol->numero_documento,
+                'documento_fiscal_tipo' => $sol->tipo_documento,
+                'documento_fiscal_numero' => $sol->numero_documento,
             ];
         });
 
@@ -32,6 +33,7 @@ class SolicitacaoPagamentoController extends Controller
                 'id' => $empenho->id,
                 'numero' => $empenho->numero,
                 'saldo' => $empenho->saldo,
+                'contrato' => $empenho->contrato?->numero,
             ],
             'solicitacoes' => $solicitacoes,
         ]);
@@ -275,7 +277,7 @@ class SolicitacaoPagamentoController extends Controller
             ], 422);
         }
 
-        $solicitacao = SolicitacaoPagamento::with(['empenho', 'solicitante'])->findOrFail($id);
+        $solicitacao = SolicitacaoPagamento::with(['empenho', 'solicitante', 'anexos'])->findOrFail($id);
 
         // Verificar se o usuário é o dono da solicitação
         if ($solicitacao->solicitante_id !== $request->user()->id) {
@@ -298,10 +300,13 @@ class SolicitacaoPagamentoController extends Controller
             ], 400);
         }
 
-        // Verificar se status é pendente
-        if ($solicitacao->status !== 'pendente') {
+        $isPendente = $solicitacao->status === 'pendente';
+        $isAnexosRecusadosComNFRecusada = $solicitacao->status === 'anexos_recusados'
+            && $solicitacao->anexos->contains(fn ($a) => $a->tipo_anexo === 'documento_fiscal' && $a->status === 'recusado');
+
+        if (!$isPendente && !$isAnexosRecusadosComNFRecusada) {
             return response()->json([
-                'message' => 'Não é possível cancelar uma solicitação com status diferente de Pendente',
+                'message' => 'Não é possível cancelar esta solicitação no status atual',
             ], 400);
         }
 

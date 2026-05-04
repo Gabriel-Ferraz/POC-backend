@@ -107,21 +107,22 @@ class PrestacaoContasController extends Controller
             }
 
             $generatedFiles = [];
-            $tempFiles = [];
+            $filePaths = [];
 
             // Gerar cada arquivo
+            $filesDir = storage_path('app/prestacao-contas/files/'.$export->id);
+            if (!file_exists($filesDir)) {
+                mkdir($filesDir, 0755, true);
+            }
+
             foreach ($layouts as $layout) {
                 $fileName = $layout->key.'.txt';
                 $content = $this->generateFileContent($layout, $validated);
                 $recordsCount = substr_count($content, "\n") - 1; // -1 para não contar o cabeçalho
 
-                // Salvar arquivo temporário
-                $tempPath = storage_path('app/temp/'.$export->id.'_'.$fileName);
-                if (!file_exists(dirname($tempPath))) {
-                    mkdir(dirname($tempPath), 0755, true);
-                }
-                file_put_contents($tempPath, $content);
-                $tempFiles[] = $tempPath;
+                $filePath = $filesDir.'/'.$fileName;
+                file_put_contents($filePath, $content);
+                $filePaths[] = $filePath;
 
                 // Registrar arquivo gerado
                 $generatedFile = SimamGeneratedFile::create([
@@ -130,7 +131,7 @@ class PrestacaoContasController extends Controller
                     'file_name' => $fileName,
                     'status' => 'gerado',
                     'records_count' => $recordsCount,
-                    'file_path' => $tempPath,
+                    'file_path' => $filePath,
                 ]);
 
                 $generatedFiles[] = $generatedFile;
@@ -152,15 +153,10 @@ class PrestacaoContasController extends Controller
 
             $zip = new ZipArchive;
             if ($zip->open($zipPath, ZipArchive::CREATE) === true) {
-                foreach ($tempFiles as $file) {
+                foreach ($filePaths as $file) {
                     $zip->addFile($file, basename($file));
                 }
                 $zip->close();
-            }
-
-            // Limpar arquivos temporários
-            foreach ($tempFiles as $file) {
-                @unlink($file);
             }
 
             // Atualizar exportação

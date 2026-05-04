@@ -97,6 +97,21 @@ class SolicitacaoPagamento extends Model
             'pagamento_em_remessa' => 'Pagamento em Remessa',
             'pagamento_realizado' => 'Pagamento Realizado',
             'cancelada' => 'Cancelada',
+            // Admin statuses
+            'rascunho' => 'Rascunho',
+            'aguardando_aprovacao' => 'Aguardando Aprovação',
+            'anexos' => 'Análise de Anexos',
+            'fiscal' => 'Análise Fiscal',
+            'gestor' => 'Aprovação do Gestor',
+            'liquidacao' => 'Liquidação',
+            'secretario' => 'Aprovação do Secretário',
+            'iss' => 'Verificação ISS',
+            'ordem_pagamento' => 'Ordem de Pagamento',
+            'autorizacao' => 'Autorização',
+            'bordero' => 'Borderô',
+            'remessa' => 'Remessa Bancária',
+            'pagamento' => 'Em Pagamento',
+            'cancelado' => 'Cancelado',
         ];
 
         return $labels[$this->status] ?? ucfirst(str_replace('_', ' ', $this->status));
@@ -133,76 +148,68 @@ class SolicitacaoPagamento extends Model
 
     private function getStatusEtapa(string $key): string
     {
-        $mapa = [
-            'pendente' => [
-                'solicitacao_pagamento' => 'em_andamento',
-            ],
-            'aguardando_aprovacao_anexos' => [
-                'solicitacao_pagamento' => 'concluido',
-                'anexos' => 'em_andamento',
-            ],
-            'anexos_recusados' => [
-                'solicitacao_pagamento' => 'concluido',
-                'anexos' => 'em_andamento',
-            ],
-            'aguardando_autorizacao_gestor' => [
-                'solicitacao_pagamento' => 'concluido',
-                'anexos' => 'concluido',
-                'fiscal' => 'concluido',
-                'gestor' => 'em_andamento',
-            ],
-            'em_liquidacao' => [
-                'solicitacao_pagamento' => 'concluido',
-                'anexos' => 'concluido',
-                'fiscal' => 'concluido',
-                'gestor' => 'concluido',
-                'liquidacao' => 'em_andamento',
-            ],
-            'em_ordem_pagamento' => [
-                'solicitacao_pagamento' => 'concluido',
-                'anexos' => 'concluido',
-                'fiscal' => 'concluido',
-                'gestor' => 'concluido',
-                'liquidacao' => 'concluido',
-                'secretario' => 'concluido',
-                'iss' => 'concluido',
-                'ordem_pagamento' => 'em_andamento',
-            ],
-            'pagamento_em_remessa' => [
-                'solicitacao_pagamento' => 'concluido',
-                'anexos' => 'concluido',
-                'fiscal' => 'concluido',
-                'gestor' => 'concluido',
-                'liquidacao' => 'concluido',
-                'secretario' => 'concluido',
-                'iss' => 'concluido',
-                'ordem_pagamento' => 'concluido',
-                'autorizacao' => 'concluido',
-                'bordero' => 'concluido',
-                'remessa' => 'concluido',
-                'pagamento' => 'em_andamento',
-            ],
-            'pagamento_realizado' => [
-                'solicitacao_pagamento' => 'concluido',
-                'anexos' => 'concluido',
-                'fiscal' => 'concluido',
-                'gestor' => 'concluido',
-                'liquidacao' => 'concluido',
-                'secretario' => 'concluido',
-                'iss' => 'concluido',
-                'ordem_pagamento' => 'concluido',
-                'autorizacao' => 'concluido',
-                'bordero' => 'concluido',
-                'remessa' => 'concluido',
-                'pagamento' => 'concluido',
-                'pagamento_realizado' => 'concluido',
-            ],
+        $etapasOrdenadas = [
+            'solicitacao_pagamento',
+            'anexos',
+            'fiscal',
+            'gestor',
+            'liquidacao',
+            'secretario',
+            'iss',
+            'ordem_pagamento',
+            'autorizacao',
+            'bordero',
+            'remessa',
+            'pagamento',
+            'pagamento_realizado',
+        ];
+
+        $statusParaEtapa = [
+            'pendente' => 'anexos',
+            'aguardando_aprovacao_anexos' => 'anexos',
+            'anexos_recusados' => 'anexos',
+            'aguardando_autorizacao_gestor' => 'gestor',
+            'em_liquidacao' => 'liquidacao',
+            'em_ordem_pagamento' => 'ordem_pagamento',
+            'pagamento_em_remessa' => 'pagamento',
+            'pagamento_realizado' => 'pagamento_realizado',
+            'cancelada' => null,
+            // Statuses do admin (simplificados)
+            'rascunho' => 'solicitacao_pagamento',
+            'aguardando_aprovacao' => 'anexos',
+            'anexos' => 'anexos',
+            'fiscal' => 'fiscal',
+            'gestor' => 'gestor',
+            'liquidacao' => 'liquidacao',
+            'secretario' => 'secretario',
+            'iss' => 'iss',
+            'ordem_pagamento' => 'ordem_pagamento',
+            'autorizacao' => 'autorizacao',
+            'bordero' => 'bordero',
+            'remessa' => 'remessa',
+            'pagamento' => 'pagamento',
+            'cancelado' => null,
         ];
 
         $statusAtual = $this->status;
+        $etapaAtual = $statusParaEtapa[$statusAtual] ?? null;
 
-        if (isset($mapa[$statusAtual][$key])) {
-            return $mapa[$statusAtual][$key];
+        if ($etapaAtual === null) {
+            return 'pendente';
+        }
+
+        $indiceAtual = array_search($etapaAtual, $etapasOrdenadas);
+        $indiceKey = array_search($key, $etapasOrdenadas);
+
+        // pagamento_realizado é estado final — tudo concluído
+        if ($statusAtual === 'pagamento_realizado') {
+            return 'concluido';
+        }
+
+        if ($indiceKey < $indiceAtual) {
+            return 'concluido';
+        } elseif ($indiceKey === $indiceAtual) {
+            return 'em_andamento';
         }
 
         return 'pendente';

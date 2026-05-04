@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\AlteracaoOrcamentaria;
+use App\Models\DotacaoAlterada;
 use App\Models\LeiAto;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +14,10 @@ use Illuminate\Support\Facades\Validator;
 
 class OrcamentarioController extends Controller
 {
+    // ============================
+    // LEIS E ATOS
+    // ============================
+
     public function indexLeisAtos(Request $request): JsonResponse
     {
         $leisAtos = LeiAto::orderBy('data_ato', 'desc')->get();
@@ -22,8 +28,8 @@ class OrcamentarioController extends Controller
                     'id' => $lei->id,
                     'numero' => $lei->numero,
                     'tipo' => $lei->tipo,
-                    'data_ato' => $lei->data_ato->format('d/m/Y'),
-                    'data_publicacao' => $lei->data_publicacao->format('d/m/Y'),
+                    'data_ato' => $lei->data_ato->format('Y-m-d'),
+                    'data_publicacao' => $lei->data_publicacao->format('Y-m-d'),
                     'descricao' => $lei->descricao,
                     'arquivo' => $lei->arquivo,
                 ];
@@ -50,13 +56,7 @@ class OrcamentarioController extends Controller
         }
 
         try {
-            $data = $request->only([
-                'numero',
-                'tipo',
-                'data_ato',
-                'data_publicacao',
-                'descricao',
-            ]);
+            $data = $request->only(['numero', 'tipo', 'data_ato', 'data_publicacao', 'descricao']);
 
             if ($request->hasFile('arquivo')) {
                 $path = $request->file('arquivo')->store('orcamentario/leis-atos', 'public');
@@ -74,10 +74,7 @@ class OrcamentarioController extends Controller
                 ],
             ], 201);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Erro ao cadastrar lei/ato',
-                'error' => $e->getMessage(),
-            ], 500);
+            return response()->json(['message' => 'Erro ao cadastrar lei/ato', 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -93,22 +90,13 @@ class OrcamentarioController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Dados inválidos',
-                'errors' => $validator->errors(),
-            ], 422);
+            return response()->json(['message' => 'Dados inválidos', 'errors' => $validator->errors()], 422);
         }
 
         $leiAto = LeiAto::findOrFail($id);
 
         try {
-            $data = $request->only([
-                'numero',
-                'tipo',
-                'data_ato',
-                'data_publicacao',
-                'descricao',
-            ]);
+            $data = $request->only(['numero', 'tipo', 'data_ato', 'data_publicacao', 'descricao']);
 
             if ($request->hasFile('arquivo')) {
                 if ($leiAto->arquivo) {
@@ -120,14 +108,9 @@ class OrcamentarioController extends Controller
 
             $leiAto->update($data);
 
-            return response()->json([
-                'message' => 'Lei/Ato atualizado com sucesso',
-            ]);
+            return response()->json(['message' => 'Lei/Ato atualizado com sucesso']);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Erro ao atualizar lei/ato',
-                'error' => $e->getMessage(),
-            ], 500);
+            return response()->json(['message' => 'Erro ao atualizar lei/ato', 'error' => $e->getMessage()], 500);
         }
     }
 
@@ -145,52 +128,43 @@ class OrcamentarioController extends Controller
             if ($leiAto->arquivo) {
                 Storage::disk('public')->delete($leiAto->arquivo);
             }
-
             $leiAto->delete();
 
-            return response()->json([
-                'message' => 'Lei/Ato excluído com sucesso',
-            ]);
+            return response()->json(['message' => 'Lei/Ato excluído com sucesso']);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Erro ao excluir lei/ato',
-                'error' => $e->getMessage(),
-            ], 500);
+            return response()->json(['message' => 'Erro ao excluir lei/ato', 'error' => $e->getMessage()], 500);
         }
     }
+
+    // ============================
+    // ALTERAÇÕES ORÇAMENTÁRIAS
+    // ============================
 
     public function indexAlteracoes(Request $request): JsonResponse
     {
         $query = AlteracaoOrcamentaria::with(['leiAto', 'dotacoes']);
 
         if ($request->filled('decreto')) {
-            $query->whereRaw('UPPER(decreto_autorizador) LIKE UPPER(?)', ['%' . $request->decreto . '%']);
+            $query->whereRaw('UPPER(decreto_autorizador) LIKE UPPER(?)', ['%'.$request->decreto.'%']);
         }
-
         if ($request->filled('tipo_ato')) {
             $query->where('tipo_ato', $request->tipo_ato);
         }
-
         if ($request->filled('tipo_credito')) {
             $query->where('tipo_credito', $request->tipo_credito);
         }
-
         if ($request->filled('tipo_recurso')) {
             $query->where('tipo_recurso', $request->tipo_recurso);
         }
-
         if ($request->filled('data_ato_de')) {
             $query->whereDate('data_ato', '>=', $request->data_ato_de);
         }
-
         if ($request->filled('data_ato_ate')) {
             $query->whereDate('data_ato', '<=', $request->data_ato_ate);
         }
-
         if ($request->filled('data_publicacao_de')) {
             $query->whereDate('data_publicacao', '>=', $request->data_publicacao_de);
         }
-
         if ($request->filled('data_publicacao_ate')) {
             $query->whereDate('data_publicacao', '<=', $request->data_publicacao_ate);
         }
@@ -198,19 +172,7 @@ class OrcamentarioController extends Controller
         $alteracoes = $query->orderBy('data_ato', 'desc')->get();
 
         return response()->json([
-            'alteracoes' => $alteracoes->map(function ($alt) {
-                return [
-                    'id' => $alt->id,
-                    'lei_ato' => $alt->leiAto->numero,
-                    'decreto_autorizador' => $alt->decreto_autorizador,
-                    'tipo_ato' => $alt->tipo_ato,
-                    'tipo_credito' => $alt->tipo_credito,
-                    'tipo_recurso' => $alt->tipo_recurso,
-                    'valor_credito' => $alt->valor_credito,
-                    'data_ato' => $alt->data_ato->format('d/m/Y'),
-                    'total_dotacoes' => $alt->dotacoes->count(),
-                ];
-            }),
+            'alteracoes' => $alteracoes->map(fn ($alt) => $this->formatAlteracao($alt)),
         ]);
     }
 
@@ -228,55 +190,91 @@ class OrcamentarioController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Dados inválidos',
-                'errors' => $validator->errors(),
-            ], 422);
+            return response()->json(['message' => 'Dados inválidos', 'errors' => $validator->errors()], 422);
         }
 
         try {
             $alteracao = AlteracaoOrcamentaria::create($request->only([
-                'lei_ato_id',
-                'decreto_autorizador',
-                'data_ato',
-                'data_publicacao',
-                'tipo_ato',
-                'tipo_credito',
-                'tipo_recurso',
-                'valor_credito',
+                'lei_ato_id', 'decreto_autorizador', 'data_ato', 'data_publicacao',
+                'tipo_ato', 'tipo_credito', 'tipo_recurso', 'valor_credito',
             ]));
+
+            $alteracao->load('leiAto', 'dotacoes');
 
             return response()->json([
                 'message' => 'Alteração orçamentária criada com sucesso',
-                'alteracao' => [
-                    'id' => $alteracao->id,
-                    'decreto' => $alteracao->decreto_autorizador,
-                ],
+                'alteracao' => $this->formatAlteracao($alteracao),
             ], 201);
         } catch (\Exception $e) {
+            return response()->json(['message' => 'Erro ao criar alteração', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updateAlteracao(Request $request, int $id): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'lei_ato_id' => 'required|exists:leis_atos,id',
+            'decreto_autorizador' => 'required|string|max:255',
+            'data_ato' => 'required|date',
+            'data_publicacao' => 'required|date',
+            'tipo_ato' => 'required|in:decreto,resolucao,ato_gestor',
+            'tipo_credito' => 'required|in:especial,suplementar,extraordinario',
+            'tipo_recurso' => 'required|in:superavit,excesso_arrecadacao,valor_credito',
+            'valor_credito' => 'required|numeric|min:0.01',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Dados inválidos', 'errors' => $validator->errors()], 422);
+        }
+
+        $alteracao = AlteracaoOrcamentaria::findOrFail($id);
+
+        try {
+            $alteracao->update($request->only([
+                'lei_ato_id', 'decreto_autorizador', 'data_ato', 'data_publicacao',
+                'tipo_ato', 'tipo_credito', 'tipo_recurso', 'valor_credito',
+            ]));
+
+            $alteracao->load('leiAto', 'dotacoes');
+
             return response()->json([
-                'message' => 'Erro ao criar alteração',
-                'error' => $e->getMessage(),
-            ], 500);
+                'message' => 'Alteração orçamentária atualizada com sucesso',
+                'alteracao' => $this->formatAlteracao($alteracao),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Erro ao atualizar alteração', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function destroyAlteracao(Request $request, int $id): JsonResponse
+    {
+        $alteracao = AlteracaoOrcamentaria::findOrFail($id);
+
+        try {
+            $alteracao->delete();
+
+            return response()->json(['message' => 'Alteração orçamentária excluída com sucesso']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Erro ao excluir alteração', 'error' => $e->getMessage()], 500);
         }
     }
 
     public function showAlteracao(Request $request, int $id): JsonResponse
     {
-        $alteracao = AlteracaoOrcamentaria::with(['leiAto', 'dotacoes'])
-            ->findOrFail($id);
+        $alteracao = AlteracaoOrcamentaria::with(['leiAto', 'dotacoes'])->findOrFail($id);
 
         return response()->json([
             'alteracao' => [
                 'id' => $alteracao->id,
+                'lei_ato_id' => $alteracao->lei_ato_id,
                 'lei_ato' => [
                     'id' => $alteracao->leiAto->id,
                     'numero' => $alteracao->leiAto->numero,
                     'tipo' => $alteracao->leiAto->tipo,
                 ],
                 'decreto_autorizador' => $alteracao->decreto_autorizador,
-                'data_ato' => $alteracao->data_ato->format('d/m/Y'),
-                'data_publicacao' => $alteracao->data_publicacao->format('d/m/Y'),
+                'data_ato' => $alteracao->data_ato->format('Y-m-d'),
+                'data_publicacao' => $alteracao->data_publicacao->format('Y-m-d'),
                 'tipo_ato' => $alteracao->tipo_ato,
                 'tipo_credito' => $alteracao->tipo_credito,
                 'tipo_recurso' => $alteracao->tipo_recurso,
@@ -296,6 +294,10 @@ class OrcamentarioController extends Controller
         ]);
     }
 
+    // ============================
+    // DOTAÇÕES
+    // ============================
+
     public function adicionarDotacao(Request $request, int $id): JsonResponse
     {
         $validator = Validator::make($request->all(), [
@@ -307,10 +309,7 @@ class OrcamentarioController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Dados inválidos',
-                'errors' => $validator->errors(),
-            ], 422);
+            return response()->json(['message' => 'Dados inválidos', 'errors' => $validator->errors()], 422);
         }
 
         $alteracao = AlteracaoOrcamentaria::findOrFail($id);
@@ -341,51 +340,103 @@ class OrcamentarioController extends Controller
                 ],
             ], 201);
         } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Erro ao adicionar dotação',
-                'error' => $e->getMessage(),
-            ], 500);
+            return response()->json(['message' => 'Erro ao adicionar dotação', 'error' => $e->getMessage()], 500);
         }
     }
 
-    public function gerarPdf(Request $request, int $id): JsonResponse
+    public function destroyDotacao(Request $request, int $alteracaoId, int $dotacaoId): JsonResponse
     {
-        $alteracao = AlteracaoOrcamentaria::with(['leiAto', 'dotacoes'])
-            ->findOrFail($id);
+        $alteracao = AlteracaoOrcamentaria::findOrFail($alteracaoId);
+        $dotacao = $alteracao->dotacoes()->findOrFail($dotacaoId);
 
-        $conteudo = [
-            'titulo' => 'ALTERAÇÃO ORÇAMENTÁRIA',
-            'dados_lei' => [
-                'numero' => $alteracao->leiAto->numero,
-                'tipo' => strtoupper($alteracao->leiAto->tipo),
-                'data_ato' => $alteracao->leiAto->data_ato->format('d/m/Y'),
-                'data_publicacao' => $alteracao->leiAto->data_publicacao->format('d/m/Y'),
-            ],
-            'dados_decreto' => [
-                'numero' => $alteracao->decreto_autorizador,
-                'tipo_ato' => strtoupper($alteracao->tipo_ato),
-                'data_ato' => $alteracao->data_ato->format('d/m/Y'),
-                'data_publicacao' => $alteracao->data_publicacao->format('d/m/Y'),
-            ],
-            'tipo_credito' => strtoupper($alteracao->tipo_credito),
-            'tipo_recurso' => strtoupper($alteracao->tipo_recurso),
-            'valor_credito' => number_format($alteracao->valor_credito, 2, ',', '.'),
-            'dotacoes' => $alteracao->dotacoes->map(function ($dot) {
-                return [
-                    'dotacao' => $dot->dotacao_orcamentaria,
-                    'conta_receita' => $dot->conta_receita,
-                    'suprimido' => number_format($dot->valor_suprimido, 2, ',', '.'),
-                    'suplementado' => number_format($dot->valor_suplementado, 2, ',', '.'),
-                    'saldo_atual' => number_format($dot->saldo_atual, 2, ',', '.'),
-                    'novo_saldo' => number_format($dot->novo_saldo, 2, ',', '.'),
-                ];
-            }),
-            'data_geracao' => now()->format('d/m/Y H:i'),
+        try {
+            $dotacao->delete();
+
+            return response()->json(['message' => 'Dotação excluída com sucesso']);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Erro ao excluir dotação', 'error' => $e->getMessage()], 500);
+        }
+    }
+
+    // ============================
+    // PDF
+    // ============================
+
+    public function gerarPdf(Request $request, int $id)
+    {
+        $user = $this->authenticateFromToken($request);
+
+        if (! $user) {
+            return response()->json(['message' => 'Não autenticado'], 401);
+        }
+
+        $alteracao = AlteracaoOrcamentaria::with(['leiAto', 'dotacoes'])->findOrFail($id);
+
+        $tipoAtoLabels = [
+            'decreto' => 'Decreto',
+            'resolucao' => 'Resolução',
+            'ato_gestor' => 'Ato do Gestor',
+        ];
+        $tipoCreditoLabels = [
+            'especial' => 'Especial',
+            'suplementar' => 'Suplementar',
+            'extraordinario' => 'Extraordinário',
+        ];
+        $tipoRecursoLabels = [
+            'superavit' => 'Superávit',
+            'excesso_arrecadacao' => 'Excesso de Arrecadação',
+            'valor_credito' => 'Valor do Crédito',
         ];
 
-        return response()->json([
-            'message' => 'Dados para geração de PDF',
-            'pdf_data' => $conteudo,
-        ]);
+        $data = [
+            'alteracao' => $alteracao,
+            'tipoAtoLabel' => $tipoAtoLabels[$alteracao->tipo_ato] ?? $alteracao->tipo_ato,
+            'tipoCreditoLabel' => $tipoCreditoLabels[$alteracao->tipo_credito] ?? $alteracao->tipo_credito,
+            'tipoRecursoLabel' => $tipoRecursoLabels[$alteracao->tipo_recurso] ?? $alteracao->tipo_recurso,
+            'totalSuprimido' => $alteracao->dotacoes->sum('valor_suprimido'),
+            'totalSuplementado' => $alteracao->dotacoes->sum('valor_suplementado'),
+            'dataGeracao' => now()->format('d/m/Y H:i'),
+        ];
+
+        $pdf = Pdf::loadView('pdf.alteracao-orcamentaria', $data);
+        $pdf->setPaper('A4', 'landscape');
+
+        $filename = 'alteracao_orcamentaria_'.$alteracao->id.'_'.now()->format('Ymd_His').'.pdf';
+
+        return $pdf->download($filename);
+    }
+
+    // ============================
+    // HELPERS
+    // ============================
+
+    private function formatAlteracao(AlteracaoOrcamentaria $alt): array
+    {
+        return [
+            'id' => $alt->id,
+            'lei_ato_id' => $alt->lei_ato_id,
+            'lei_ato' => $alt->leiAto->numero,
+            'decreto_autorizador' => $alt->decreto_autorizador,
+            'tipo_ato' => $alt->tipo_ato,
+            'tipo_credito' => $alt->tipo_credito,
+            'tipo_recurso' => $alt->tipo_recurso,
+            'valor_credito' => $alt->valor_credito,
+            'data_ato' => $alt->data_ato->format('Y-m-d'),
+            'data_publicacao' => $alt->data_publicacao->format('Y-m-d'),
+            'total_dotacoes' => $alt->dotacoes->count(),
+        ];
+    }
+
+    private function authenticateFromToken(Request $request): ?\App\Models\User
+    {
+        $token = $request->bearerToken() ?? $request->query('token');
+
+        if (! $token) {
+            return null;
+        }
+
+        $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+
+        return $accessToken?->tokenable;
     }
 }

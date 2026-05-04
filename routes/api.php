@@ -116,7 +116,10 @@ Route::middleware('auth:sanctum')
                         Route::get('/', [OrcamentarioController::class, 'indexAlteracoes']);
                         Route::post('/', [OrcamentarioController::class, 'storeAlteracao']);
                         Route::get('/{id}', [OrcamentarioController::class, 'showAlteracao']);
+                        Route::put('/{id}', [OrcamentarioController::class, 'updateAlteracao']);
+                        Route::delete('/{id}', [OrcamentarioController::class, 'destroyAlteracao']);
                         Route::post('/{id}/dotacoes', [OrcamentarioController::class, 'adicionarDotacao']);
+                        Route::delete('/{alteracaoId}/dotacoes/{dotacaoId}', [OrcamentarioController::class, 'destroyDotacao']);
                         Route::get('/{id}/pdf', [OrcamentarioController::class, 'gerarPdf']);
                     });
             });

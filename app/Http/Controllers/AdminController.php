@@ -265,7 +265,7 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'status' => 'required|in:rascunho,aguardando_aprovacao,anexos,fiscal,gestor,liquidacao,secretario,iss,ordem_pagamento,autorizacao,bordero,remessa,pagamento,pagamento_realizado,cancelado',
-            'motivo' => 'nullable|string|max:500',
+            'motivo' => 'required|string|min:10|max:500',
         ]);
 
         DB::beginTransaction();

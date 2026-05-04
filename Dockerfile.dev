@@ -29,10 +29,6 @@ ENV ORACLE_HOME="/opt/oracle/instantclient_21_9"
 RUN echo "instantclient,/opt/oracle/instantclient_21_9" | pecl install oci8-3.3.0 \
     && docker-php-ext-enable oci8
 
-# Swoole extension
-RUN pecl install swoole \
-    && docker-php-ext-enable swoole
-
 # Redis extension (phpredis)
 RUN pecl install redis \
     && docker-php-ext-enable redis

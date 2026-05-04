@@ -72,6 +72,8 @@ services:
 
   tomcat:
     image: tomcat:9-alpine
+    volumes:
+      - ./docker/tomcat/server.xml:/usr/local/tomcat/conf/server.xml:ro
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.tomcat.rule=PathPrefix(`/tomcat`)"

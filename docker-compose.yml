@@ -78,12 +78,12 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.tomcat.rule=PathPrefix(`/tomcat`)"
       - "traefik.http.routers.tomcat.entrypoints=web"
-      - "traefik.http.middlewares.tomcat-strip.stripprefix.prefixes=/tomcat"
-      - "traefik.http.routers.tomcat.middlewares=tomcat-strip"
       - "traefik.http.services.tomcat.loadbalancer.server.port=8080"
 
   adminer:
-    image: adminer:latest
+    build:
+      context: .
+      dockerfile: docker/adminer/Dockerfile
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.adminer.rule=PathPrefix(`/adminer`)"

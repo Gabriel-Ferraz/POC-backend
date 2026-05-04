@@ -6,29 +6,23 @@ services:
       args:
         UID: ${UID:-1000}
         GID: ${GID:-1000}
-    ports:
-      - "3333:3333"
     volumes:
       - .:/app
     labels:
       - "traefik.enable=true"
-
-      # rota /api → backend
       - "traefik.http.routers.app.rule=PathPrefix(`/api`)"
       - "traefik.http.routers.app.entrypoints=web"
-
-      # remove /api antes de enviar pro container
-      - "traefik.http.middlewares.app-strip.stripprefix.prefixes=/api"
-      - "traefik.http.routers.app.middlewares=app-strip"
-
       - "traefik.http.services.app.loadbalancer.server.port=3333"
     environment:
       CACHE_STORE: redis
       QUEUE_CONNECTION: redis
-      DB_CONNECTION: pgsql
-      DB_USERNAME: postgres
-      DB_HOST: postgres
-      DB_PORT: 5432
+      DB_CONNECTION: oracle
+      DB_HOST: oracle
+      DB_PORT: 1521
+      DB_DATABASE: FREEPDB1
+      DB_USERNAME: ${DB_USERNAME:-poc_user}
+      DB_PASSWORD: ${DB_PASSWORD:-poc_pass}
+      DB_CHARSET: AL32UTF8
       SEED_DB: true
       REDIS_CLIENT: phpredis
       REDIS_HOST: redis
@@ -37,76 +31,67 @@ services:
       CHOKIDAR_INTERVAL: "300"
     env_file:
       - .env
+    ports:
+      - "3333:3333"
     depends_on:
-      postgres:
+      oracle:
         condition: service_healthy
       redis:
         condition: service_started
-    networks:
-      - network
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
-  test:
-    image: registry.dev.hugyourcustomer.ai/huglabs/php8.2-ci:latest
-    working_dir: /app
-    command: tail -f /dev/null
-    stdin_open: true
-    tty: true
+  frontend:
+    build:
+      context: ../POC-frontend
+      dockerfile: Dockerfile
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.routers.frontend.entrypoints=web"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
     environment:
-      APP_ENV: testing
-    volumes:
-      - .:/app
-    networks:
-      - network
+      NEXT_PUBLIC_API_URL: /api
+      NODE_ENV: production
 
-
-  postgres:
-    image: postgres:15-alpine
+  oracle:
+    image: gvenzl/oracle-free:23-slim
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - oracle_data:/opt/oracle/oradata
     environment:
-      POSTGRES_DB: ${DB_DATABASE:-poc_sjp}
-      POSTGRES_USER: ${DB_USERNAME:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-    networks:
-      - network
+      ORACLE_PASSWORD: ${ORACLE_SYS_PASSWORD:-oraclepass}
+      APP_USER: ${DB_USERNAME:-poc_user}
+      APP_USER_PASSWORD: ${DB_PASSWORD:-poc_pass}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d poc_sjp"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "healthcheck.sh"]
+      interval: 20s
+      timeout: 15s
+      retries: 30
+      start_period: 300s
 
   redis:
     image: redis:7-alpine
     volumes:
       - redis_data:/data
-    networks:
-      - network
 
   tomcat:
     image: tomcat:9-alpine
     ports:
       - "8180:8080"
-    networks:
-      - network
 
   adminer:
     image: adminer:latest
     ports:
       - "8181:8080"
     environment:
-      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DEFAULT_SERVER: oracle
     depends_on:
-      - postgres
-    networks:
-      - network
+      - oracle
 
   traefik:
     image: traefik:v3.0
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
       - "--providers.file.filename=/etc/traefik/dynamic.yml"
       - "--entrypoints.web.address=:80"
     ports:
@@ -115,15 +100,9 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml
-    networks:
-      - network
-
-networks:
-  network:
-    driver: bridge
 
 volumes:
-  postgres_data:
+  oracle_data:
     driver: local
   redis_data:
     driver: local

@@ -12,6 +12,11 @@ class AuditLog extends Model
 
     public $timestamps = false;
 
+    protected static function booted(): void
+    {
+        static::creating(fn (self $model) => $model->created_at ??= now());
+    }
+
     protected $fillable = [
         'user_id',
         'action',
@@ -20,6 +25,7 @@ class AuditLog extends Model
         'payload',
         'ip',
         'user_agent',
+        'created_at',
     ];
 
     protected function casts(): array

@@ -112,9 +112,7 @@ return [
     |
     */
 
-    'warm' => [
-        ...Octane::defaultServicesToWarm(),
-    ],
+    'warm' => array_diff(Octane::defaultServicesToWarm(), ['db', 'db.factory', 'db.transactions']),
 
     'flush' => [
         //

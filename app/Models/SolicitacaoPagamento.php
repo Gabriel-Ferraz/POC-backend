@@ -39,6 +39,8 @@ class SolicitacaoPagamento extends Model
     ];
 
     protected $casts = [
+        'empenho_id' => 'integer',
+        'solicitante_id' => 'integer',
         'data_emissao_documento' => 'date',
         'cancelada_em' => 'date',
         'paga_em' => 'date',

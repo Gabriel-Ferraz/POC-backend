@@ -45,9 +45,8 @@ class ChamadoController extends Controller
             $query = \App\Models\User::whereHas('chamados')
                 ->select('id', 'name', 'perfil');
 
-            // Filtro por nome (para autocomplete) - case-insensitive
             if ($request->filled('busca')) {
-                $query->where('name', 'ILIKE', '%'.$request->busca.'%');
+                $query->whereRaw('UPPER(name) LIKE UPPER(?)', ['%'.$request->busca.'%']);
             }
 
             $usuarios = $query->orderBy('name')
@@ -88,7 +87,7 @@ class ChamadoController extends Controller
             ->select('id', 'name', 'perfil');
 
         if ($request->filled('busca')) {
-            $query->where('name', 'ILIKE', '%'.$request->busca.'%');
+            $query->whereRaw('UPPER(name) LIKE UPPER(?)', ['%'.$request->busca.'%']);
         }
 
         $usuarios = $query->orderBy('name')->limit(20)->get();
@@ -135,12 +134,12 @@ class ChamadoController extends Controller
 
         // Filtro por Data de Resposta (Início)
         if ($request->filled('data_resposta_inicio')) {
-            $query->whereDate('respondido_em', '>=', $request->data_resposta_inicio);
+            $query->whereDate('data_ultima_resposta', '>=', $request->data_resposta_inicio);
         }
 
         // Filtro por Data de Resposta (Fim)
         if ($request->filled('data_resposta_fim')) {
-            $query->whereDate('respondido_em', '<=', $request->data_resposta_fim);
+            $query->whereDate('data_ultima_resposta', '<=', $request->data_resposta_fim);
         }
 
         // Filtro por Módulo
@@ -569,11 +568,19 @@ class ChamadoController extends Controller
         }
 
         try {
-            $path = $request->file('arquivo')->store('anexos/chamados', 'public');
+            $file = $request->file('arquivo');
+            $nomeOriginal = $file->getClientOriginalName();
+            $nomeSalvo = time().'_'.\Illuminate\Support\Str::slug(pathinfo($nomeOriginal, PATHINFO_FILENAME)).'.'.$file->extension();
+            $path = $file->storeAs('chamados/'.$chamado->id, $nomeSalvo, 'public');
 
+            $user = auth()->user();
             $chamado->anexos()->create([
-                'arquivo' => $path,
-                'nome_original' => $request->file('arquivo')->getClientOriginalName(),
+                'caminho' => $path,
+                'nome_original' => $nomeOriginal,
+                'nome_salvo' => $nomeSalvo,
+                'tamanho' => $file->getSize(),
+                'tipo' => $file->getMimeType(),
+                'enviado_por_usuario_id' => $user->id,
             ]);
 
             return response()->json([

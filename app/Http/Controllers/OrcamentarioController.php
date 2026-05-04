@@ -164,7 +164,7 @@ class OrcamentarioController extends Controller
         $query = AlteracaoOrcamentaria::with(['leiAto', 'dotacoes']);
 
         if ($request->filled('decreto')) {
-            $query->where('decreto_autorizador', 'ILIKE', '%' . $request->decreto . '%');
+            $query->whereRaw('UPPER(decreto_autorizador) LIKE UPPER(?)', ['%' . $request->decreto . '%']);
         }
 
         if ($request->filled('tipo_ato')) {

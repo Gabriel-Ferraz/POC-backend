@@ -22,9 +22,11 @@ class Chamado extends Model
         'sistema_operacional',
         'ip_origem',
         'user_agent',
+        'responsavel_id',
     ];
 
     protected $casts = [
+        'usuario_id' => 'integer',
         'data_ultima_resposta' => 'datetime',
         'data_conclusao' => 'datetime',
     ];

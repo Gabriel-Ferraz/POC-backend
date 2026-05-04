@@ -20,6 +20,23 @@ class POCDemoSeeder extends Seeder
 {
     public function run(): void
     {
+        // Limpa dados demo para garantir idempotência (ordem respeita FKs)
+        \Illuminate\Support\Facades\DB::statement('DELETE FROM tramites_solicitacao');
+        \Illuminate\Support\Facades\DB::statement('DELETE FROM anexos_solicitacao');
+        \Illuminate\Support\Facades\DB::statement('DELETE FROM solicitacoes_pagamento');
+        \Illuminate\Support\Facades\DB::statement('DELETE FROM empenhos');
+        \Illuminate\Support\Facades\DB::statement('DELETE FROM contratos');
+        \Illuminate\Support\Facades\DB::statement('DELETE FROM anexos_chamado');
+        \Illuminate\Support\Facades\DB::statement('DELETE FROM mensagens_chamado');
+        \Illuminate\Support\Facades\DB::statement('DELETE FROM chamados');
+        \Illuminate\Support\Facades\DB::statement('DELETE FROM dotacoes_alteradas');
+        \Illuminate\Support\Facades\DB::statement('DELETE FROM alteracoes_orcamentarias');
+        \Illuminate\Support\Facades\DB::statement('DELETE FROM leis_atos');
+        // Quebra ciclo FK users.fornecedor_id <-> fornecedores.responsavel_tecnico_id
+        \Illuminate\Support\Facades\DB::statement('UPDATE users SET fornecedor_id = NULL');
+        \Illuminate\Support\Facades\DB::statement('DELETE FROM fornecedores');
+        \Illuminate\Support\Facades\DB::statement('DELETE FROM users');
+
         // Criar usuários com diferentes perfis
         $responsavelTecnico = User::create([
             'name' => 'João Silva (Responsável Técnico)',

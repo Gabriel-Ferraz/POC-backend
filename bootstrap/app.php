@@ -62,7 +62,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return response()->json([
                 'message' => 'Internal server error',
-                'errors' => null
+                'errors' => config('app.debug') ? [
+                    'exception' => get_class($exception),
+                    'message' => $exception->getMessage(),
+                    'file' => $exception->getFile() . ':' . $exception->getLine(),
+                    'trace' => collect($exception->getTrace())->take(10)->toArray(),
+                ] : null,
             ], Response::HTTP_INTERNAL_SERVER_ERROR);
         });
     })->create();

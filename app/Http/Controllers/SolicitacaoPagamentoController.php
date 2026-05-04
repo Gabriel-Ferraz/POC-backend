@@ -162,6 +162,7 @@ class SolicitacaoPagamentoController extends Controller
             'anexos.aprovador',
             'anexos.enviadoPor',
             'tramites.usuario',
+            'pagoPor',
         ])->findOrFail($id);
 
         return response()->json([
@@ -250,8 +251,18 @@ class SolicitacaoPagamentoController extends Controller
 
                 // PAGAMENTO REALIZADO
                 'pagamento_realizado' => $solicitacao->paga_em ? [
-                    'data_hora' => $solicitacao->paga_em->format('d/m/Y H:i'),
-                    'valor' => $solicitacao->valor,
+                    'data_hora' => $solicitacao->paga_em->format('d/m/Y H:i:s'),
+                    'valor_pago' => $solicitacao->valor_pago ?? $solicitacao->valor,
+                    'registrado_por' => $solicitacao->pagoPor?->name,
+                    'observacao' => $solicitacao->observacao_pagamento_realizado,
+                    'banco' => $solicitacao->banco,
+                    'agencia' => $solicitacao->agencia
+                        ? $solicitacao->agencia.($solicitacao->digito_agencia ? '-'.$solicitacao->digito_agencia : '')
+                        : null,
+                    'conta' => $solicitacao->conta
+                        ? $solicitacao->conta.($solicitacao->digito_conta ? '-'.$solicitacao->digito_conta : '')
+                        : null,
+                    'forma_pagamento' => $solicitacao->forma_pagamento,
                 ] : null,
 
                 // CANCELAMENTO

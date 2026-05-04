@@ -4,7 +4,7 @@ set -e
 sed -i 's/\r//' "$0"
 
 echo "Installing PHP dependencies..."
-if [ ! -d "vendor" ] || [ "composer.json" -nt "vendor/autoload.php" ]; then
+if [ ! -d "vendor" ] || [ "composer.json" -nt "vendor/autoload.php" ] || [ ! -d "vendor/barryvdh" ]; then
     # Tenta install (mais rápido); se o lock estiver desatualizado cai no update
     composer install --no-interaction --prefer-dist --no-scripts 2>&1 \
         | tee /tmp/composer_out.txt \

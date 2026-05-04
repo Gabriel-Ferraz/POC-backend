@@ -289,9 +289,16 @@ class AdminController extends Controller
             }
 
             // Atualizar status
-            $solicitacao->update([
-                'status' => $validated['status'],
-            ]);
+            $updateData = ['status' => $validated['status']];
+
+            if ($validated['status'] === 'pagamento_realizado') {
+                $updateData['paga_em'] = now();
+                $updateData['pago_por_id'] = Auth::id();
+                $updateData['valor_pago'] = $solicitacao->valor;
+                $updateData['observacao_pagamento_realizado'] = $validated['motivo'];
+            }
+
+            $solicitacao->update($updateData);
 
             // Registrar no trâmite
             $observacao = $validated['motivo']

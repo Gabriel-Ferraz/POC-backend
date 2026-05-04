@@ -36,6 +36,9 @@ class SolicitacaoPagamento extends Model
         'cancelada_em',
         'motivo_cancelamento',
         'paga_em',
+        'pago_por_id',
+        'valor_pago',
+        'observacao_pagamento_realizado',
     ];
 
     protected $casts = [
@@ -43,8 +46,9 @@ class SolicitacaoPagamento extends Model
         'solicitante_id' => 'integer',
         'data_emissao_documento' => 'date',
         'cancelada_em' => 'date',
-        'paga_em' => 'date',
+        'paga_em' => 'datetime',
         'valor' => 'decimal:2',
+        'valor_pago' => 'decimal:2',
     ];
 
     public function empenho(): BelongsTo
@@ -65,6 +69,11 @@ class SolicitacaoPagamento extends Model
     public function tramites(): HasMany
     {
         return $this->hasMany(TramiteSolicitacao::class, 'solicitacao_id');
+    }
+
+    public function pagoPor(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'pago_por_id');
     }
 
     public function registrarTramite(
